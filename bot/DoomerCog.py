@@ -1,15 +1,10 @@
-import discord
 import datetime
-import logging
 import openai
-import sys
 import traceback 
 import asyncio
 import re
 import random
-import pandas as pd
 import json
-import atexit
 
 from discord_utils import *
 from discord.ext import commands

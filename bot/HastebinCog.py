@@ -1,5 +1,4 @@
 import json
-import discord
 import requests
 import sys
 

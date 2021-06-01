@@ -5,6 +5,7 @@ Doomer is a bot that just tries to fit in.
 * Copy `.env.template` to `.env`
 * Fill in your keys in the new `.env` file.
 * Consult the discord docs for making your bot join your channel.
+* Install the `openai`, `discord`, `discord.py`, and `requests` pip packages.
 
 # Running
 Clone this repo, then in the project root:
@@ -13,6 +14,11 @@ Clone this repo, then in the project root:
 # Usage
 Type `>how` in chat for a full list of commands.
 Also, see https://github.com/Jacoby6000/Doomer/blob/main/docs/usage.md
+
+# Cost
+Running this bot is not free. It uses a lot of API calls. Pay attention to your usage. It's a fun bot, but its an 
+expensive bot.  I have racked up 30$ in costs in a single day once while developing this.  While its a novel new toy, 
+people are bound to use it a ton and the pennies can really add up. Be careful.
 
 # Warning
 This AI has seen things on the internet.  Unspeakable things. Sometimes they (it?) will say absolutely  disgusting 

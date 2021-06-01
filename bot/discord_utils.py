@@ -1,21 +1,5 @@
-import discord
 import datetime
-import logging
-import openai
-import sys
-import traceback 
-import asyncio
 import re
-import random
-import pandas as pd
-import json
-import atexit
-
-from discord.ext import commands
-from collections import deque
-from pprint import pprint
-from functools import partial
-from os import path
 
 def is_number_str(string):
     return bool(re.match("^\\d+$", string))
@@ -81,14 +65,6 @@ def get_emoji_string(emoji, emoji_names=True):
             return str(emoji.id)
     else:
         return emoji
-
-def format_embeds(message):
-    result = ""
-    for embed in message.embeds:
-        normalized = pd.json_normalize(embed.to_dict(), sep="_").to_dict(orient='records')[0]
-        for k, v in normalized.items():
-            result = result + "\n> " + str(k) + ": " + str(v)
-    return result
 
 def fix_emoji(in_str):
     return re.sub(r'<(:\w+:)\d+>', '\\1', in_str)
