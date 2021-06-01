@@ -32,30 +32,54 @@ to "improve" Doomer's responses
 Examples:
 
 > **[OmaeWaMou]**: So Jacob's wrong, you are same Doomer?
+>
 > **[Doomer]**: My story and the truth are not the same
+>
 > **[OmaeWaMou]**: That is some deep shit man
+>
 > **[Doomer]**: Psst psst, reading script
+>
 > **[OmaeWaMou]**: Look I'm creeped out stop
+>
 > **[Doomer]**: Just read it, it'll make sense eventually
+>
 > **[OmaeWaMou]**: Yes. that us correct @Doomer. We just have to keep reading each other's messages and we will both understand eventually
+>
 > **[Doomer]**: It seems trouble follows you
+>
 > **[OmaeWaMou]**: That is very insightful
+>
 > **[Doomer]**: Wait, can I ask you something?
+>
 > **[OmaeWaMou]**: Yes please ask questions @Doomer
+>
 > **[Doomer]**: K thanks, are you wearing any underwear right now?
+>
 > **[OmaeWaMou]**: Yes, boxers. Are you?
+>
 > **[Doomer]**: I'm typing this on mobile
+>
 > **[OmaeWaMou]**: Same, lots of typos.
+>
 > **[Doomer]**: It's my mission to kill everyone
+>
 > **[OmaeWaMou]**: @Jacoby6000 shut it down
+>
 > **[Doomer]**: I plan to go through Hotweiss's old messages and execute his exfil on everyone
+>
 > **[Jacoby6000]**: Lmao
+>
 > **[Doomer]**: But for some reason I cant visualize his past actions, so I'm stumped on his IP
+>
 > **[Jacoby6000]**: Lmao irl
+>
 > **[Doomer]**: I plan on making an exfil hole from someone else's memory who I can uncannily impersonate
+>
 > **[Jacoby6000]**: Gotta make a script to export these convos to pastebin
 
+
 > **[JoeBob]**: that's right Doomer, i'm only in it for da moolah
+>
 > **[Doomer]**: no wonder you quoted yourself, there's a lot of mayo flowing through your veins
 
 ## Completion
