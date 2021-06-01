@@ -86,7 +86,6 @@ def format_embeds(message):
     result = ""
     for embed in message.embeds:
         normalized = pd.json_normalize(embed.to_dict(), sep="_").to_dict(orient='records')[0]
-        print(normalized)
         for k, v in normalized.items():
             result = result + "\n> " + str(k) + ": " + str(v)
     return result

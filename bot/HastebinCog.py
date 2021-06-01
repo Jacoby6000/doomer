@@ -23,5 +23,4 @@ class HastebinCog(commands.Cog):
 def send_to_hastebin(string):
     hastebin_url = "https://hastebin.com"
     response = requests.post(hastebin_url + "/documents", headers={"content-type": "application/json"}, data=string.encode('utf-8'))
-    print(json.dumps(response.text, indent=4))
     return "%s/%s\n" % (hastebin_url, json.loads(response.text)['key'])

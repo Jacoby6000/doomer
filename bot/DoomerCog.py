@@ -156,7 +156,6 @@ class DoomerCog(commands.Cog):
         try: 
             await self.reply(ctx.message, force=True)
         except Exception as e:
-            print(''.join(traceback.format_exception(etype=type(e), value=e, tb=e.__traceback__)))
             await send_message(ctx, e)
 
     @commands.command()
@@ -168,7 +167,6 @@ class DoomerCog(commands.Cog):
                     return
                 time = datetime.datetime.fromisoformat(time_str)
                 messages = fix_emoji(format_messages(await get_messages(channel, int(num_messages), time)))
-                print(messages)
                 banter = await self.complete_text(messages, response_length)
                 await send_message(ctx, banter)
         except Exception as e:
@@ -183,7 +181,6 @@ class DoomerCog(commands.Cog):
                 if not channel:
                     return
                 messages = fix_emoji(format_messages(await get_messages(channel, int(num_messages))))
-                print(messages)
                 banter = await self.complete_text(messages, response_length)
                 await send_message(ctx, banter)
         except Exception as e:
