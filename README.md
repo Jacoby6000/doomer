@@ -30,7 +30,7 @@ In a channel you're comfortable with Doomer talking a whole bunch, run
 >auto_reply_rate_in $channel_partial_name 80
 ```
 That would set Doomer's auto-reply rate in the given channel to 80%.
-Doomer will also always reply if you mention his name, or `@` them.
+Doomer will also always reply if you mention their name, or `@` them.
 
 Sometimes the conversation devolves to nonsense, somtimes it makes sense.  You can tune the [settings][#settings] 
 to "improve" Doomer's responses
