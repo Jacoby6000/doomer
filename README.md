@@ -1,6 +1,9 @@
 # What?
 Doomer is a bot that just tries to fit in.
 
+Doomer may be the pinnacle of human-ai communication, but his code base is not the pinnacle of software design.  This 
+was thrown together for fun.  Here be dragons.
+
 # Set up
 * Copy `.env.template` to `.env`
 * Fill in your keys in the new `.env` file.

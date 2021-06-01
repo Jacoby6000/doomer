@@ -44,7 +44,7 @@ def format_messages(messages, emoji_names=True, emphasize_names=True):
         messages
     ))
 
-def get_emoji_strings(message, emoji_names=True):
+def get_emoji_strings(message, emoji_names=True, colons=False):
     reacts = list(map(
         lambda react: get_emoji_string(react.emoji, emoji_names), 
         filter(
@@ -57,7 +57,7 @@ def get_emoji_strings(message, emoji_names=True):
     else: 
         return ""
 
-def get_emoji_string(emoji, emoji_names=True):
+def get_emoji_string(emoji, emoji_names=True, colons=True):
     if hasattr(emoji, "name"):
         if emoji_names:
             return emoji.name

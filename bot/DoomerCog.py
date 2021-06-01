@@ -294,7 +294,7 @@ class DoomerCog(commands.Cog):
                 else:
                     for reaction in filter(lambda m: not m.me, message.reactions):
                         has_reacts = True
-                        examples.append([message.clean_content, get_emoji_string(reaction.emoji, emoji_names=False)])
+                        examples.append([message.clean_content, get_emoji_string(reaction.emoji, emoji_names=False, colons=False)])
 
             if has_reacts:
                 result = await self.answer(list(map(lambda m: format_messages([m], emoji_names=False), messages[-20:])), context, examples, format_messages([message], emoji_names=False), 50, temp=0)
