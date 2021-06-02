@@ -318,7 +318,6 @@ class DoomerCog(commands.Cog):
         if force or self.should_act(message, auto_reply_rate):
             async with message.channel.typing():
                 messages = fix_emoji(format_messages(await get_messages(message.channel, int(30), filter_doomer=False)))
-                print(messages)
                 banter = await self.complete_text(messages + "\n**[" + self.bot.user.name + "]**:", 300, stop=["**["])
                 await message.channel.send(banter)
 
