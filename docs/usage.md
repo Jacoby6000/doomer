@@ -22,6 +22,9 @@
 > Set temperature. Tune how risky (random) the model is.  0 = not random, 100 = more random.
 > `>temperature $n`
 > 
+> Adjust number of messages to ingest for an auto reply
+> `>auto_reply_messages $n`
+> 
 > Globally adjust percent chance to auto reply (0 to 100)
 > `>auto_reply_rate $n`
 > 

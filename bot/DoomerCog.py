@@ -24,6 +24,7 @@ class DoomerCog(commands.Cog):
         self.settings["auto_reply_rate_channels"] = {}
         self.settings["auto_react_rate"] = 1
         self.settings["auto_react_rate_channels"] = {}
+        self.settings["auto_reply_messages"] = 10
 
         with open("docs/usage.md", "r") as usage:
             self.help_text = ''.join(usage.readlines())
@@ -143,6 +144,15 @@ class DoomerCog(commands.Cog):
             await ctx.send(
                 "Changing auto_react_rate from `"+str(cur_react_rate)+"` to `"+n+"` in channel `" + channel.name + "`."
             )
+        else:
+            await not_a_number(ctx, n)
+    
+    @commands.command()
+    async def auto_reply_messages(self, ctx, n):
+        if n.isnumeric():
+            cur_auto_reply_messages = self.settings["auto_reply_messages"]
+            self.settings["auto_reply_messages"] = int(n)
+            await ctx.send("Changing auto_reply_messages from `"+str(cur_auto_reply_messages)+"` to `"+n + "`")
         else:
             await not_a_number(ctx, n)
     
@@ -317,7 +327,7 @@ class DoomerCog(commands.Cog):
 
         if force or self.should_act(message, auto_reply_rate):
             async with message.channel.typing():
-                messages = fix_emoji(format_messages(await get_messages(message.channel, int(30), filter_doomer=False)))
+                messages = fix_emoji(format_messages(await get_messages(message.channel, self.settings["auto_reply_messages"]), filter_doomer=False))
                 banter = await self.complete_text(messages + "\n**[" + self.bot.user.name + "]**:", 300, stop=["**["])
                 await message.channel.send(banter)
 
