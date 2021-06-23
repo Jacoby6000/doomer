@@ -376,3 +376,6 @@ class DoomerCog(commands.Cog):
         with open('settings.json', 'w') as outfile:
             print(json.dumps(self.settings, indent=4))
             json.dump(self.settings, outfile)
+
+def setup(bot):
+    bot.add_cog(DoomerCog(bot))

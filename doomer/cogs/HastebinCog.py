@@ -1,6 +1,5 @@
 import json
 import requests
-import sys
 
 from discord_utils import *
 from discord.ext import commands
@@ -23,3 +22,6 @@ def send_to_hastebin(string):
     hastebin_url = "https://hastebin.com"
     response = requests.post(hastebin_url + "/documents", headers={"content-type": "application/json"}, data=string.encode('utf-8'))
     return "%s/%s\n" % (hastebin_url, json.loads(response.text)['key'])
+
+def setup(bot):
+    bot.add_cog(HastebinCog(bot))
