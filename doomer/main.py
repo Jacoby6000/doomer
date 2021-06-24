@@ -1,12 +1,13 @@
 from os import getenv
-from pathlib import Path
+import argparse
 
 import openai
 import discord
 from discord.ext import commands
 from cogwatch import watch
 
-COGS_PATH =  'doomer/cogs'
+COGS_PATH = "doomer/cogs"
+
 
 class DoomerBot(commands.Bot):
     def __init__(self):
@@ -23,11 +24,12 @@ class DoomerBot(commands.Bot):
             return
 
         await self.process_commands(message)
-        
+
 
 def start():
     bot = DoomerBot()
-    openai.api_key = getenv('OPENAI_API_KEY')
+    openai.api_key = getenv("OPENAI_API_KEY")
     bot.run(getenv("DISCORD_API_KEY"))
+
 
 start()
