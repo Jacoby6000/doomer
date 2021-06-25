@@ -77,7 +77,7 @@ async def get_messages(channel, num_messages, time=None, carry_messages=[], iter
 
     raw_messages = await channel.history(limit=num_to_fetch, oldest_first=False, before=time).flatten()
     filtered_messages = list(filter(lambda msg : 
-        ((not msg.author.bot and not msg.clean_content.startswith(">")) or not filter_doomer) and 
+        ((not msg.author.bot or not filter_doomer) and not msg.clean_content.startswith(">")) and 
             (from_user == None or from_user in msg.author.name.lower()), 
         raw_messages
     ))
