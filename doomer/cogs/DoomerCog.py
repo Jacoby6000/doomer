@@ -1,16 +1,19 @@
 import datetime
-import openai
+from functools import partial
 import traceback
 import asyncio
 import re
 import random
 import json
-
-from discord_utils import *
-from discord.ext import commands
-from collections import deque
-from functools import partial
 from os import path
+
+import discord
+from discord.ext import commands
+import openai
+from transformers import AutoTokenizer, GPT2LMHeadModel
+
+from doomer.discord_utils import *
+from doomer.language_models import GPT3LanguageModel, GPT2TransformersLanguageModel
 
 
 class DoomerCog(commands.Cog):
@@ -25,6 +28,8 @@ class DoomerCog(commands.Cog):
         self.settings["auto_react_rate"] = 1
         self.settings["auto_react_rate_channels"] = {}
         self.settings["auto_reply_messages"] = 10
+        self.models = self.initialize_models()
+        self.default_model = self.models["gpt2_base"]
 
         with open("docs/usage.md", "r") as usage:
             self.help_text = "".join(usage.readlines())
@@ -33,7 +38,17 @@ class DoomerCog(commands.Cog):
             with open("settings.json", "r") as infile:
                 self.settings.update(json.load(infile))
 
-        print(json.dumps(self.settings, indent=4))
+    def initialize_models(self):
+        print("Initializing Models...")
+        return {
+            "gpt3": GPT3LanguageModel(),
+            "gpt2_base": GPT2TransformersLanguageModel(
+                tokenizer=AutoTokenizer.from_pretrained("gpt2"),
+                model=GPT2LMHeadModel.from_pretrained("gpt2"),
+            ),
+        }
+
+    # region settings commands
 
     def update_auto_reply_rate(self, name, value):
         result = None
@@ -54,30 +69,14 @@ class DoomerCog(commands.Cog):
         return result
 
     @commands.command()
-    async def ping(self, ctx):
-        await ctx.send("pong")
-
-    @commands.command()
-    async def how(self, ctx):
-        await ctx.send(self.help_text)
-
-    @commands.command()
-    async def info(self, ctx):
-        embed = discord.Embed(
-            title=f"{ctx.guild.name}",
-            description="Pretends to be people saying things and doing stuff.",
-            timestamp=datetime.datetime.utcnow(),
-            color=discord.Color.blue(),
-        )
-        embed.add_field(name="Server created at", value=f"{ctx.guild.created_at}")
-        embed.add_field(name="Server Owner", value=f"{ctx.guild.owner}")
-        embed.add_field(name="Server Region", value=f"{ctx.guild.region}")
-        embed.add_field(name="Server ID", value=f"{ctx.guild.id}")
-        await ctx.send(embed=embed)
-
-    @commands.command()
-    async def get_settings(self, ctx):
-        await send_message(ctx, json.dumps(self.settings, indent=4))
+    async def default_model(self, ctx, model_name):
+        if model_name.lower() in self.models:
+            self.default_model = model_name
+            await ctx.send(f"Default model changed to {model_name}")
+        else:
+            await ctx.send(
+                f"{model_name} is not a valid model. Choices are: {', '.join(self.models)}"
+            )
 
     @commands.command()
     async def presence_penalty(self, ctx, n):
@@ -205,6 +204,32 @@ class DoomerCog(commands.Cog):
         else:
             await not_a_number(ctx, n)
 
+    # endregion
+
+    ### tmp
+
+    @commands.command()
+    async def how(self, ctx):
+        await ctx.send(self.help_text)
+
+    @commands.command()
+    async def info(self, ctx):
+        embed = discord.Embed(
+            title=f"{ctx.guild.name}",
+            description="Pretends to be people saying things and doing stuff.",
+            timestamp=datetime.datetime.utcnow(),
+            color=discord.Color.blue(),
+        )
+        embed.add_field(name="Server created at", value=f"{ctx.guild.created_at}")
+        embed.add_field(name="Server Owner", value=f"{ctx.guild.owner}")
+        embed.add_field(name="Server Region", value=f"{ctx.guild.region}")
+        embed.add_field(name="Server ID", value=f"{ctx.guild.id}")
+        await ctx.send(embed=embed)
+
+    @commands.command()
+    async def get_settings(self, ctx):
+        await send_message(ctx, json.dumps(self.settings, indent=4))
+
     @commands.command()
     async def respond(self, ctx):
         try:
@@ -280,7 +305,7 @@ class DoomerCog(commands.Cog):
                 await send_message(ctx, e)
         else:
             async with ctx.channel.typing():
-                await not_a_number(ctx, n)
+                await not_a_number(ctx, length)
 
     @commands.command()
     async def complete_no_repeat(self, ctx, length, *text: str):
@@ -485,22 +510,21 @@ class DoomerCog(commands.Cog):
                 )
                 await message.channel.send(banter)
 
-    async def complete_text(self, string, length, stop=None):
+    def sanitize_output(self, text):
+        return re.sub(r"[\s^]>", "\n>", fix_emoji(text))
+
+    async def complete_text(self, prompt, max_tokens):
         loop = asyncio.get_running_loop()
-        response = await loop.run_in_executor(
+        completion = await loop.run_in_executor(
             None,
             partial(
-                openai.Completion.create,
-                engine="davinci",
-                prompt=string,
-                max_tokens=int(length),
-                frequency_penalty=hundo_to_float(self.settings["frequency_penalty"]),
-                temperature=hundo_to_float(self.settings["temperature"]),
-                presence_penalty=hundo_to_float(self.settings["presence_penalty"]),
-                stop=stop,
+                self.default_model.completion_handler,
+                prompt=prompt,
+                max_tokens=int(max_tokens),
             ),
         )
-        return re.sub(r"[\s^]>", "\n>", fix_emoji(response.choices[0].text))
+        text = self.default_model.parse_completion(completion)
+        return self.sanitize_output(text)
 
     async def answer(
         self, docs, context_messages, examples, question, tokens, temp=None

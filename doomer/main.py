@@ -1,5 +1,4 @@
 from os import getenv
-import argparse
 
 import openai
 import discord
@@ -32,4 +31,5 @@ def start():
     bot.run(getenv("DISCORD_API_KEY"))
 
 
-start()
+if __name__ == '__main__':
+    start()

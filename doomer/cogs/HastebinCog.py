@@ -1,7 +1,7 @@
 import json
 import requests
 
-from discord_utils import *
+from doomer.discord_utils import *
 from discord.ext import commands
 
 

@@ -8,12 +8,12 @@ author = "xyz"
 author-email = "fjhkdsj@fkdjshjf.com"
 description-file = "README.md"
 requires = [
-  "discord.py",
   "openai",
   "requests",
   "cogwatch",
-  "transformers"
+  "transformers[torch]"
 ]
-dev-requires = [
+[tool.flit.metadata.requires-extra]
+dev = [
   "black"
 ]
