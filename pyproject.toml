@@ -11,7 +11,8 @@ requires = [
   "openai",
   "requests",
   "cogwatch",
-  "transformers[torch]"
+  "transformers[torch]",
+  "pandas"
 ]
 [tool.flit.metadata.requires-extra]
 dev = [
