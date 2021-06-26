@@ -9,27 +9,21 @@ from os import path
 
 import discord
 from discord.ext import commands
-import openai
-from transformers import AutoTokenizer, GPT2LMHeadModel
 
 from doomer.discord_utils import *
-from doomer.language_models import GPT3LanguageModel, GPT2TransformersLanguageModel
 
 
 class DoomerCog(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
         self.settings = {}
-        self.settings["temperature"] = 100
-        self.settings["presence_penalty"] = 0
-        self.settings["frequency_penalty"] = 0
-        self.settings["auto_reply_rate"] = 1
+        self.settings["auto_reply_rate"] = 100
         self.settings["auto_reply_rate_channels"] = {}
         self.settings["auto_react_rate"] = 1
         self.settings["auto_react_rate_channels"] = {}
         self.settings["auto_reply_messages"] = 10
-        self.models = self.initialize_models()
-        self.default_model = self.models["gpt2_base"]
+        self.default_model_name = "gpt2_base"
+        self.default_model = self.bot.models[self.default_model_name]
 
         with open("docs/usage.md", "r") as usage:
             self.help_text = "".join(usage.readlines())
@@ -38,171 +32,49 @@ class DoomerCog(commands.Cog):
             with open("settings.json", "r") as infile:
                 self.settings.update(json.load(infile))
 
-    def initialize_models(self):
-        print("Initializing Models...")
-        return {
-            "gpt3": GPT3LanguageModel(),
-            "gpt2_base": GPT2TransformersLanguageModel(
-                tokenizer=AutoTokenizer.from_pretrained("gpt2"),
-                model=GPT2LMHeadModel.from_pretrained("gpt2"),
-            ),
-        }
-
     # region settings commands
 
-    def update_auto_reply_rate(self, name, value):
-        result = None
-        if name in self.settings["auto_reply_rate_channels"]:
-            result = self.settings["auto_reply_rate_channels"][name]
+    @commands.command()
+    async def update_model_settings(self, ctx, setting, value, model_name=None):
+        if model_name is None:
+            model_name = self.default_model_name
 
-        self.settings["auto_reply_rate_channels"][name] = value
+        model = self.bot.models.get(model_name)
+        if not model:
+            await ctx.send(f"Model named {model_name} not found.")
+            return
 
-        return result
-
-    def update_auto_react_rate(self, name, value):
-        result = None
-        if name in self.settings["auto_react_rate_channels"]:
-            result = self.settings["auto_react_rate_channels"][name]
-
-        self.settings["auto_react_rate_channels"][name] = value
-
-        return result
+        attr = getattr(model, setting)
+        if attr:
+            if value.isnumeric():
+                value = int(value)
+            setattr(model, setting, value)
+            await ctx.send(f"Setting model {model_name} setting {setting} to {value}")
+            print(model.__dict__)
+        else:
+            await ctx.send(f"Model {model_name} does not have setting {setting}")
 
     @commands.command()
-    async def default_model(self, ctx, model_name):
-        if model_name.lower() in self.models:
-            self.default_model = model_name
+    async def update_bot_settings(self, ctx, setting, *values):
+        ## TODO: Finish
+        valid_settings = self.settings.keys()
+        if setting in valid_settings:
+            await ctx.send(f"Setting {setting} set to value")
+            print(self.__dict__)
+        else:
+            await ctx.send(f"Setting {setting} is not valid.")
+
+    @commands.command()
+    async def set_default_model(self, ctx, model_name):
+        available_models = self.bot.models.keys()
+        model_name = model_name.lower()
+        if model_name in available_models:
+            self.default_model = self.bot.models[model_name]
             await ctx.send(f"Default model changed to {model_name}")
         else:
             await ctx.send(
-                f"{model_name} is not a valid model. Choices are: {', '.join(self.models)}"
+                f"{model_name} is not a valid model. Choices are: {', '.join(available_models)}"
             )
-
-    @commands.command()
-    async def presence_penalty(self, ctx, n):
-        if n.isnumeric():
-            cur_presence_penalty = self.settings["presence_penalty"]
-            self.settings["presence_penalty"] = int(n)
-            await ctx.send(
-                "Changing presence_penalty from `"
-                + str(cur_presence_penalty)
-                + "` to `"
-                + n
-                + "`"
-            )
-        else:
-            await not_a_number(ctx, n)
-
-    @commands.command()
-    async def frequency_penalty(self, ctx, n):
-        if n.isnumeric():
-            cur_frequency_penalty = self.settings["frequency_penalty"]
-            self.settings["frequency_penalty"] = int(n)
-            await ctx.send(
-                "Changing frequency_penalty from `"
-                + str(cur_frequency_penalty)
-                + "` to `"
-                + n
-                + "`"
-            )
-        else:
-            await not_a_number(ctx, n)
-
-    @commands.command()
-    async def temperature(self, ctx, n):
-        if n.isnumeric():
-            cur_temp = self.settings["temperature"]
-            self.settings["temperature"] = int(n)
-            await ctx.send(
-                "Changing temperature from `" + str(cur_temp) + "` to `" + n + "`"
-            )
-        else:
-            await not_a_number(ctx, n)
-
-    @commands.command()
-    async def auto_reply_rate(self, ctx, n):
-        if n.isnumeric():
-            cur_reply_rate = self.settings["auto_reply_rate"]
-            self.settings["auto_reply_rate"] = int(n)
-            await ctx.send(
-                "Changing auto_reply_rate from `"
-                + str(cur_reply_rate)
-                + "` to `"
-                + n
-                + "`"
-            )
-        else:
-            await not_a_number(ctx, n)
-
-    @commands.command()
-    async def auto_react_rate(self, ctx, n):
-        if n.isnumeric():
-            cur_react_rate = self.settings["auto_react_rate"]
-            self.settings["auto_react_rate"] = int(n)
-            await ctx.send(
-                "Changing auto_react_rate from `"
-                + str(cur_react_rate)
-                + "` to `"
-                + n
-                + "`"
-            )
-        else:
-            await not_a_number(ctx, n)
-
-    @commands.command()
-    async def auto_reply_rate_in(self, ctx, channel_name, n):
-        if n.isnumeric():
-            channel = await get_channel(ctx, channel_name)
-            cur_reply_rate = self.update_auto_reply_rate(channel.name, int(n))
-            if cur_reply_rate == None:
-                cur_reply_rate = self.settings["auto_reply_rate"]
-
-            await ctx.send(
-                "Changing auto_reply_rate from `"
-                + str(cur_reply_rate)
-                + "` to `"
-                + n
-                + "` in channel `"
-                + channel.name
-                + "`."
-            )
-        else:
-            await not_a_number(ctx, n)
-
-    @commands.command()
-    async def auto_react_rate_in(self, ctx, channel_name, n):
-        if n.isnumeric():
-            channel = await get_channel(ctx, channel_name)
-            cur_react_rate = self.update_auto_react_rate(channel.name, int(n))
-            if cur_react_rate == None:
-                cur_react_rate = self.settings["auto_react_rate"]
-
-            await ctx.send(
-                "Changing auto_react_rate from `"
-                + str(cur_react_rate)
-                + "` to `"
-                + n
-                + "` in channel `"
-                + channel.name
-                + "`."
-            )
-        else:
-            await not_a_number(ctx, n)
-
-    @commands.command()
-    async def auto_reply_messages(self, ctx, n):
-        if n.isnumeric():
-            cur_auto_reply_messages = self.settings["auto_reply_messages"]
-            self.settings["auto_reply_messages"] = int(n)
-            await ctx.send(
-                "Changing auto_reply_messages from `"
-                + str(cur_auto_reply_messages)
-                + "` to `"
-                + n
-                + "`"
-            )
-        else:
-            await not_a_number(ctx, n)
 
     # endregion
 
@@ -293,7 +165,7 @@ class DoomerCog(commands.Cog):
             try:
                 async with ctx.channel.typing():
                     message = await self.complete_text(in_str, length)
-                    await send_message(ctx, in_str + message)
+                    await send_message(ctx, message)
             except Exception as e:
                 print(
                     "".join(
@@ -502,7 +374,6 @@ class DoomerCog(commands.Cog):
                         await get_messages(
                             message.channel, self.settings["auto_reply_messages"]
                         ),
-                        filter_doomer=False,
                     )
                 )
                 banter = await self.complete_text(
@@ -513,7 +384,7 @@ class DoomerCog(commands.Cog):
     def sanitize_output(self, text):
         return re.sub(r"[\s^]>", "\n>", fix_emoji(text))
 
-    async def complete_text(self, prompt, max_tokens):
+    async def complete_text(self, prompt, max_tokens, **kwargs):
         loop = asyncio.get_running_loop()
         completion = await loop.run_in_executor(
             None,
@@ -525,31 +396,6 @@ class DoomerCog(commands.Cog):
         )
         text = self.default_model.parse_completion(completion)
         return self.sanitize_output(text)
-
-    async def answer(
-        self, docs, context_messages, examples, question, tokens, temp=None
-    ):
-        loop = asyncio.get_running_loop()
-        if temp == None:
-            temp = self.settings["temperature"]
-
-        response = await loop.run_in_executor(
-            None,
-            partial(
-                openai.Answer.create,
-                search_model="ada",
-                model="davinci",
-                question=question,
-                examples_context=context_messages,
-                examples=examples,
-                documents=docs,
-                max_tokens=int(tokens),
-                max_rerank=10,
-                stop=["\n"],
-                temperature=hundo_to_float(temp),
-            ),
-        )
-        return fix_emoji(response.answers[0])
 
     def save_settings(self):
         with open("settings.json", "w") as outfile:

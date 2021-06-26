@@ -43,21 +43,24 @@ class GPT3LanguageModel(LanguageModel):
 
 
 class GPT2TransformersLanguageModel(LanguageModel):
-    def __init__(self, tokenizer: AutoTokenizer, model: GPT2LMHeadModel) -> None:
-        self.tokenizer = tokenizer
-        self.model = model
+    def __init__(self, tokenizer_name: str, model_name: str) -> None:
+        self._tokenizer = AutoTokenizer.from_pretrained(tokenizer_name)
+        self._model = GPT2LMHeadModel.from_pretrained(model_name)
         self.temperature = 100
+        self.top_p = 100
+        self.top_k = 0
         super().__init__()
 
     def completion_handler(self, prompt: str, max_tokens: int):
-        prompt = prompt + self.tokenizer.eos_token
-        inputs = self.tokenizer.encode(prompt, return_tensors="pt")
-        return self.model.generate(
-            inputs,
+        inputs = self._tokenizer(prompt, return_tensors="pt")
+        return self._model.generate(
+            **inputs,
+            do_sample=True,
             max_length=max_tokens,
-            pad_token_id=self.tokenizer.eos_token_id,
-            temperature=self.temperature,
+            top_p=hundo_to_float(self.top_p),
+            top_k=hundo_to_float(self.top_k),
         )
 
     def parse_completion(self, completion: Any) -> str:
-        return self.tokenizer.decode(completion[0], skip_special_tokens=True)
+        print(completion[0])
+        return self._tokenizer.decode(completion[0], skip_special_tokens=True)
