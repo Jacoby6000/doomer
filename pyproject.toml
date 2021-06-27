@@ -1,0 +1,22 @@
+[build-system]
+requires = ["flit_core >=2,<4"]
+build-backend = "flit_core.buildapi"
+
+[tool.flit.metadata]
+module = "doomer"
+author = "xyz"
+author-email = "fjhkdsj@fkdjshjf.com"
+description-file = "README.md"
+requires = [
+  "openai",
+  "requests",
+  "cogwatch",
+  "transformers[torch]",
+  "pandas",
+  "discord.py"
+]
+[tool.flit.metadata.requires-extra]
+dev = [
+  "black",
+  "ipykernel"
+]
