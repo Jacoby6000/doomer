@@ -97,6 +97,9 @@ class DoomerCog(commands.Cog):
         return should_send
 
     async def react(self, message):
+        if self.default_model_name != "gpt3":
+            return
+        
         channel_settings = self.settings["channel_settings"]
         if message.channel.id in channel_settings["auto_react_rate"]:
             auto_react_rate = channel_settings["auto_react_rate"][message.channel.id]
@@ -183,7 +186,8 @@ class DoomerCog(commands.Cog):
                 banter = await self.complete_text(
                     messages + "\n**[" + self.bot.user.name + "]**:", 300, stop=["**["]
                 )
-                await message.channel.send(banter)
+                first_msg = banter.split("**[")[0]
+                await message.channel.send(first_msg)
 
     ## Help Commands
 
@@ -252,13 +256,11 @@ class DoomerCog(commands.Cog):
             await ctx.send(f"Model named {model_name} not found.")
             return
 
-        attr = getattr(model, setting)
-        if attr:
+        if setting in model.settings.keys():
             if value.isnumeric():
                 value = int(value)
-            setattr(model, setting, value)
+            model.settings[setting] = value
             await ctx.send(f"Setting model {model_name} setting {setting} to {value}")
-            print(model.__dict__)
         else:
             await ctx.send(f"Model {model_name} does not have setting {setting}")
 
