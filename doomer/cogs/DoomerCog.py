@@ -16,12 +16,15 @@ from doomer.discord_utils import *
 class DoomerCog(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
-        self.settings = {}
-        self.settings["auto_reply_rate"] = 100
-        self.settings["auto_reply_rate_channels"] = {}
-        self.settings["auto_react_rate"] = 1
-        self.settings["auto_react_rate_channels"] = {}
-        self.settings["auto_reply_messages"] = 10
+        self.settings = {
+            "auto_reply_rate": 100,
+            "auto_react_rate": 1,
+            "auto_reply_messages": 10
+        }
+        self.channel_settings = {
+            "auto_reply_rate": {},
+            "auto_react_rate": {}
+        }
         self.default_model_name = "gpt2_base"
         self.default_model = self.bot.models[self.default_model_name]
 
@@ -55,12 +58,20 @@ class DoomerCog(commands.Cog):
             await ctx.send(f"Model {model_name} does not have setting {setting}")
 
     @commands.command()
-    async def update_bot_settings(self, ctx, setting, *values):
-        ## TODO: Finish
+    async def update_bot_settings(self, ctx, setting, value):
         valid_settings = self.settings.keys()
         if setting in valid_settings:
+            self.settings[valid_settings] = value
             await ctx.send(f"Setting {setting} set to value")
-            print(self.__dict__)
+        else:
+            await ctx.send(f"Setting {setting} is not valid.")
+
+    @commands.command()
+    async def update_channel_settings(self, ctx, setting, channel_name, value):
+        valid_settings = self.channel_settings.keys()
+        if setting in valid_settings:
+            self.settings[valid_settings][channel_name] = value
+            await ctx.send(f"Setting {setting} set to value for channel {channel_name}")
         else:
             await ctx.send(f"Setting {setting} is not valid.")
 
@@ -75,10 +86,6 @@ class DoomerCog(commands.Cog):
             await ctx.send(
                 f"{model_name} is not a valid model. Choices are: {', '.join(available_models)}"
             )
-
-    # endregion
-
-    ### tmp
 
     @commands.command()
     async def how(self, ctx):
@@ -101,6 +108,10 @@ class DoomerCog(commands.Cog):
     @commands.command()
     async def get_settings(self, ctx):
         await send_message(ctx, json.dumps(self.settings, indent=4))
+
+    @commands.command()
+    async def get_channel_settings(self, ctx):
+        await send_message(ctx, json.dumps(self.channel_settings, indent=4))
 
     @commands.command()
     async def respond(self, ctx):
@@ -178,13 +189,6 @@ class DoomerCog(commands.Cog):
         else:
             async with ctx.channel.typing():
                 await not_a_number(ctx, length)
-
-    @commands.command()
-    async def complete_no_repeat(self, ctx, length, *text: str):
-        in_str = fix_emoji(" ".join(text))
-        async with ctx.channel.typing():
-            message = await self.complete_text(in_str, length)
-            await send_message(ctx, message)
 
     @commands.command()
     async def answer_as_v2(self, ctx, channel_name, user_name, tokens, *question: str):
@@ -294,8 +298,8 @@ class DoomerCog(commands.Cog):
 
     async def react(self, message):
         auto_react_rate = self.settings["auto_react_rate"]
-        if message.channel.name in self.settings["auto_react_rate_channels"]:
-            auto_react_rate = self.settings["auto_react_rate_channels"][
+        if message.channel.name in self.channel_settings["auto_react_rate_channels"]:
+            auto_react_rate = self.channel_settings["auto_react_rate_channels"][
                 message.channel.name
             ]
 
@@ -362,8 +366,8 @@ class DoomerCog(commands.Cog):
 
     async def reply(self, message, force=False):
         auto_reply_rate = self.settings["auto_reply_rate"]
-        if message.channel.name in self.settings["auto_reply_rate_channels"]:
-            auto_reply_rate = self.settings["auto_reply_rate_channels"][
+        if message.channel.name in self.channel_settings["auto_reply_rate_channels"]:
+            auto_reply_rate = self.channel_settings["auto_reply_rate_channels"][
                 message.channel.name
             ]
 

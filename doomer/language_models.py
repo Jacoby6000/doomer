@@ -44,12 +44,18 @@ class GPT3LanguageModel(LanguageModel):
 
 class GPT2TransformersLanguageModel(LanguageModel):
     def __init__(self, tokenizer_name: str, model_name: str) -> None:
-        self._tokenizer = AutoTokenizer.from_pretrained(tokenizer_name)
-        self._model = GPT2LMHeadModel.from_pretrained(model_name)
+        self._tokenizer = self.update_tokenizer(tokenizer_name)
+        self._model = self.update_model(model_name)
         self.temperature = 100
         self.top_p = 100
         self.top_k = 0
         super().__init__()
+
+    def update_tokenizer(self, tokenizer_name: str):
+        return AutoTokenizer.from_pretrained(tokenizer_name)
+
+    def update_model(self, model_name: str):
+        return GPT2LMHeadModel.from_pretrained(model_name)
 
     def completion_handler(self, prompt: str, max_tokens: int):
         inputs = self._tokenizer(prompt, return_tensors="pt")
