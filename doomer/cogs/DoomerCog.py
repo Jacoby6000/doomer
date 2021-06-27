@@ -13,7 +13,7 @@ from discord.ext import commands
 from discord import utils
 
 from doomer.discord_utils import *
-from doomer.settings import SETTINGS_DIR, DEFAULT_MODEL_NAME
+from doomer.settings import SETTINGS_DIR, DEFAULT_MODEL_NAME, HELP_FILE
 
 
 class DoomerCog(commands.Cog):
@@ -31,9 +31,6 @@ class DoomerCog(commands.Cog):
         self.default_model_name = DEFAULT_MODEL_NAME
         self.default_model = self.bot.models[self.default_model_name]
         atexit.register(self.save_settings)
-
-        with open("docs/usage.md", "r") as usage:
-            self.help_text = "".join(usage.readlines())
 
         if path.exists(SETTINGS_DIR / "settings.json"):
             with open(SETTINGS_DIR / "settings.json", "r") as infile:
@@ -191,7 +188,9 @@ class DoomerCog(commands.Cog):
 
     @commands.command()
     async def how(self, ctx):
-        await ctx.send(self.help_text)
+        with open(HELP_FILE, "r") as f:
+            help_text = f.read()
+        await ctx.send(help_text)
 
     @commands.command()
     async def info(self, ctx):
