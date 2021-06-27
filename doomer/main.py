@@ -7,7 +7,6 @@ from discord.ext import commands
 from cogwatch import watch
 
 from doomer.language_models import GPT2TransformersLanguageModel, GPT3LanguageModel
-from doomer.cogs.doomercog import DoomerCog
 
 COGS_PATH = "doomer/cogs"
 
