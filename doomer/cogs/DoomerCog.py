@@ -6,12 +6,14 @@ import re
 import random
 import json
 from os import path
+import atexit
 
 import discord
 from discord.ext import commands
 from discord import utils
 
 from doomer.discord_utils import *
+from doomer.settings import SETTINGS_DIR, DEFAULT_MODEL_NAME
 
 
 class DoomerCog(commands.Cog):
@@ -26,14 +28,15 @@ class DoomerCog(commands.Cog):
                 "auto_react_rate": {},
             },
         }
-        self.default_model_name = "gpt2_base"
+        self.default_model_name = DEFAULT_MODEL_NAME
         self.default_model = self.bot.models[self.default_model_name]
+        atexit.register(self.save_settings)
 
         with open("docs/usage.md", "r") as usage:
             self.help_text = "".join(usage.readlines())
 
-        if path.exists("settings.json"):
-            with open("settings.json", "r") as infile:
+        if path.exists(SETTINGS_DIR / "settings.json"):
+            with open(SETTINGS_DIR / "settings.json", "r") as infile:
                 self.settings.update(json.load(infile))
 
     ## Helpers
@@ -68,11 +71,6 @@ class DoomerCog(commands.Cog):
         completion_text = self.default_model.parse_completion(completion)
         return self.sanitize_output(completion_text)
 
-    def save_settings(self):
-        with open("settings.json", "w") as outfile:
-            print(json.dumps(self.settings, indent=4))
-            json.dump(self.settings, outfile)
-
     ## Listeners
 
     @commands.Cog.listener("on_message")
@@ -99,7 +97,7 @@ class DoomerCog(commands.Cog):
     async def react(self, message):
         if self.default_model_name != "gpt3":
             return
-        
+
         channel_settings = self.settings["channel_settings"]
         if message.channel.id in channel_settings["auto_react_rate"]:
             auto_react_rate = channel_settings["auto_react_rate"][message.channel.id]
@@ -459,6 +457,15 @@ class DoomerCog(commands.Cog):
                 await send_message(ctx, e)
         else:
             await not_a_number(ctx, tokens)
+
+    def save_settings(self):
+        SETTINGS_DIR.mkdir(exist_ok=True)
+        with open(SETTINGS_DIR / "settings.json", "w") as f:
+            json.dump(self.settings, f)
+
+        for model_name, model in self.bot.models.items():
+            with open(SETTINGS_DIR / f"{model_name}.json", "w") as f:
+                json.dump(model.settings, f)
 
 
 def setup(bot):

@@ -1,5 +1,7 @@
 from abc import ABC, abstractmethod
 from typing import Any
+from os import path
+import json
 
 import openai
 from transformers import (
@@ -8,11 +10,15 @@ from transformers import (
 )
 
 from doomer.discord_utils import hundo_to_float
+from doomer.settings import SETTINGS_DIR
 
 
 class LanguageModel(ABC):
-    def __init__(self) -> None:
-        pass
+    def __init__(self, model_name: str) -> None:
+        self.model_name = model_name
+        if path.exists(SETTINGS_DIR / f"{model_name}.json"):
+            with open(SETTINGS_DIR / f"{model_name}.json", "r") as infile:
+                self.settings.update(json.load(infile))
 
     @abstractmethod
     def completion_handler(self, prompt: str, max_tokens: int, stop: list, **kwargs):
@@ -24,13 +30,13 @@ class LanguageModel(ABC):
 
 
 class GPT3LanguageModel(LanguageModel):
-    def __init__(self) -> None:
+    def __init__(self, model_name: str) -> None:
         self.settings = {
             "temperature": 100,
             "frequency_penalty": 0,
             "presence_penalty": 50
         }
-        super().__init__()
+        super().__init__(model_name)
 
     def completion_handler(self, prompt: str, max_tokens: int, stop: list = None):
         return openai.Completion.create(
@@ -56,6 +62,7 @@ class GPT2TransformersLanguageModel(LanguageModel):
             "top_p": 100,
             "top_k": 0
         }
+        super().__init__(model_name)
 
     def update_tokenizer(self, tokenizer_name: str):
         return GPT2TokenizerFast.from_pretrained(tokenizer_name)

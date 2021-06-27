@@ -1,6 +1,6 @@
 __pycache__/
 .env
-settings.json
+settings/
 venv/
 .vscode/
 data/

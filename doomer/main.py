@@ -1,4 +1,5 @@
 from os import getenv
+import atexit
 
 import openai
 import discord
@@ -6,6 +7,7 @@ from discord.ext import commands
 from cogwatch import watch
 
 from doomer.language_models import GPT2TransformersLanguageModel, GPT3LanguageModel
+from doomer.cogs.doomercog import DoomerCog
 
 COGS_PATH = "doomer/cogs"
 
@@ -20,8 +22,8 @@ class DoomerBot(commands.Bot):
     def initialize_models(self):
         print("Initializing Models...")
         return {
-            "gpt3": GPT3LanguageModel(),
-            "gpt2_base": GPT2TransformersLanguageModel(
+            "gpt3": GPT3LanguageModel(model_name="gpt3"),
+            "gpt2": GPT2TransformersLanguageModel(
                 tokenizer_name="gpt2",
                 model_name="gpt2",
             ),
