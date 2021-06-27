@@ -2,7 +2,10 @@ from abc import ABC, abstractmethod
 from typing import Any
 
 import openai
-from transformers import AutoTokenizer, GPT2LMHeadModel
+from transformers import (
+    GPT2LMHeadModel,
+    GPT2TokenizerFast,
+)
 
 from doomer.discord_utils import hundo_to_float
 
@@ -12,7 +15,7 @@ class LanguageModel(ABC):
         pass
 
     @abstractmethod
-    def completion_handler(self, prompt: str, max_tokens: int, **kwargs):
+    def completion_handler(self, prompt: str, max_tokens: int, stop: list, **kwargs):
         raise NotImplementedError
 
     @abstractmethod
@@ -43,30 +46,35 @@ class GPT3LanguageModel(LanguageModel):
 
 
 class GPT2TransformersLanguageModel(LanguageModel):
-    def __init__(self, tokenizer_name: str, model_name: str) -> None:
+    def __init__(self, tokenizer_name: str, model_name: str, stop: list = None) -> None:
         self._tokenizer = self.update_tokenizer(tokenizer_name)
         self._model = self.update_model(model_name)
+        self.max_length = 1024
         self.temperature = 100
         self.top_p = 100
         self.top_k = 0
         super().__init__()
 
     def update_tokenizer(self, tokenizer_name: str):
-        return AutoTokenizer.from_pretrained(tokenizer_name)
+        return GPT2TokenizerFast.from_pretrained(tokenizer_name)
 
     def update_model(self, model_name: str):
         return GPT2LMHeadModel.from_pretrained(model_name)
 
-    def completion_handler(self, prompt: str, max_tokens: int):
+    def completion_handler(self, prompt: str, max_tokens: int, stop: list = None):
+
         inputs = self._tokenizer(prompt, return_tensors="pt")
-        return self._model.generate(
+        input_len = len(inputs["input_ids"][0])
+        full_completion = self._model.generate(
             **inputs,
             do_sample=True,
             max_length=max_tokens,
             top_p=hundo_to_float(self.top_p),
-            top_k=hundo_to_float(self.top_k),
+            top_k=hundo_to_float(self.top_k)
         )
+        completion = full_completion[0][input_len:]
+        completion.resize_(1, len(completion))
+        return completion
 
     def parse_completion(self, completion: Any) -> str:
-        print(completion[0])
         return self._tokenizer.decode(completion[0], skip_special_tokens=True)

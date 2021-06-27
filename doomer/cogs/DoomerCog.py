@@ -9,6 +9,7 @@ from os import path
 
 import discord
 from discord.ext import commands
+from discord import utils
 
 from doomer.discord_utils import *
 
@@ -18,12 +19,12 @@ class DoomerCog(commands.Cog):
         self.bot = bot
         self.settings = {
             "auto_reply_rate": 100,
-            "auto_react_rate": 1,
-            "auto_reply_messages": 10
-        }
-        self.channel_settings = {
-            "auto_reply_rate": {},
-            "auto_react_rate": {}
+            "auto_react_rate": 0,
+            "auto_reply_messages": 10,
+            "channel_settings": {
+                "auto_reply_rate": {},
+                "auto_react_rate": {},
+            },
         }
         self.default_model_name = "gpt2_base"
         self.default_model = self.bot.models[self.default_model_name]
@@ -58,20 +59,37 @@ class DoomerCog(commands.Cog):
             await ctx.send(f"Model {model_name} does not have setting {setting}")
 
     @commands.command()
-    async def update_bot_settings(self, ctx, setting, value):
+    async def update_settings(self, ctx, setting, value):
+        if not value.isnumeric():
+            await ctx.send("You must provide a numeric value")
+            return
+
         valid_settings = self.settings.keys()
         if setting in valid_settings:
-            self.settings[valid_settings] = value
-            await ctx.send(f"Setting {setting} set to value")
+            self.settings[setting] = int(value)
+            await ctx.send(f"Setting {setting} set to value {value}")
         else:
             await ctx.send(f"Setting {setting} is not valid.")
 
     @commands.command()
     async def update_channel_settings(self, ctx, setting, channel_name, value):
-        valid_settings = self.channel_settings.keys()
+        if not value.isnumeric():
+            await ctx.send("You must provide a numeric value")
+            return
+
+        channel_settings = self.settings["channel_settings"]
+        valid_settings = channel_settings.keys()
         if setting in valid_settings:
-            self.settings[valid_settings][channel_name] = value
-            await ctx.send(f"Setting {setting} set to value for channel {channel_name}")
+            try:
+                channel = next(
+                    filter(lambda x: x.name == channel_name, ctx.guild.text_channels)
+                )
+                channel_settings[setting][int(channel.id)] = int(value)
+                await ctx.send(
+                    f"Setting {setting} set to value {value} for channel {channel_name}"
+                )
+            except StopIteration:
+                await ctx.send(f"Channel {channel_name} not found in guild.")
         else:
             await ctx.send(f"Setting {setting} is not valid.")
 
@@ -105,13 +123,37 @@ class DoomerCog(commands.Cog):
         embed.add_field(name="Server ID", value=f"{ctx.guild.id}")
         await ctx.send(embed=embed)
 
-    @commands.command()
-    async def get_settings(self, ctx):
-        await send_message(ctx, json.dumps(self.settings, indent=4))
+    def display_settings(self, ctx):
+        display_settings = self.settings.copy()
+
+        # Looks up channel names from ids
+        display_settings["channel_settings"] = {
+            setting: {
+                utils.get(ctx.guild.channels, id=channel).name: value
+                for channel, value in values.items()
+            }
+            for setting, values in display_settings["channel_settings"].items()
+        }
+        return display_settings
 
     @commands.command()
-    async def get_channel_settings(self, ctx):
-        await send_message(ctx, json.dumps(self.channel_settings, indent=4))
+    async def get_settings(self, ctx):
+        await send_message(ctx, json.dumps(self.display_settings(ctx), indent=4))
+
+    @commands.command()
+    async def get_model_settings(self, ctx, model_name=None):
+        if model_name is None:
+            model_name = self.default_model_name
+
+        try:
+            model_dict = {
+                k: v
+                for k, v in self.bot.models[model_name].__dict__.items()
+                if k[0] != "_"
+            }
+            await send_message(ctx, json.dumps(model_dict, indent=4))
+        except KeyError:
+            await ctx.send(f"Model {model_name} is not a valid model.")
 
     @commands.command()
     async def respond(self, ctx):
@@ -176,7 +218,7 @@ class DoomerCog(commands.Cog):
             try:
                 async with ctx.channel.typing():
                     message = await self.complete_text(in_str, length)
-                    await send_message(ctx, message)
+                    await send_message(ctx, in_str + message)
             except Exception as e:
                 print(
                     "".join(
@@ -292,16 +334,15 @@ class DoomerCog(commands.Cog):
             for user in message.mentions:
                 if user.id == self.bot.user.id:
                     return True
-
         should_send = random.randint(0, 100) < rate
         return should_send
 
     async def react(self, message):
-        auto_react_rate = self.settings["auto_react_rate"]
-        if message.channel.name in self.channel_settings["auto_react_rate_channels"]:
-            auto_react_rate = self.channel_settings["auto_react_rate_channels"][
-                message.channel.name
-            ]
+        channel_settings = self.settings["channel_settings"]
+        if message.channel.id in channel_settings["auto_react_rate"]:
+            auto_react_rate = channel_settings["auto_react_rate"][message.channel.id]
+        else:
+            auto_react_rate = self.settings["auto_react_rate"]
 
         if self.should_act(message, auto_react_rate, on_self_reference=False):
             messages = list(
@@ -365,11 +406,11 @@ class DoomerCog(commands.Cog):
                         )
 
     async def reply(self, message, force=False):
-        auto_reply_rate = self.settings["auto_reply_rate"]
-        if message.channel.name in self.channel_settings["auto_reply_rate_channels"]:
-            auto_reply_rate = self.channel_settings["auto_reply_rate_channels"][
-                message.channel.name
-            ]
+        channel_settings = self.settings["channel_settings"]
+        if message.channel.id in channel_settings["auto_reply_rate"]:
+            auto_reply_rate = channel_settings["auto_reply_rate"][message.channel.id]
+        else:
+            auto_reply_rate = self.settings["auto_reply_rate"]
 
         if force or self.should_act(message, auto_reply_rate):
             async with message.channel.typing():
@@ -388,7 +429,7 @@ class DoomerCog(commands.Cog):
     def sanitize_output(self, text):
         return re.sub(r"[\s^]>", "\n>", fix_emoji(text))
 
-    async def complete_text(self, prompt, max_tokens, **kwargs):
+    async def complete_text(self, prompt, max_tokens, stop=None):
         loop = asyncio.get_running_loop()
         completion = await loop.run_in_executor(
             None,
@@ -396,6 +437,7 @@ class DoomerCog(commands.Cog):
                 self.default_model.completion_handler,
                 prompt=prompt,
                 max_tokens=int(max_tokens),
+                stop=stop,
             ),
         )
         text = self.default_model.parse_completion(completion)

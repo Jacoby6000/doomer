@@ -16,5 +16,6 @@ requires = [
 ]
 [tool.flit.metadata.requires-extra]
 dev = [
-  "black"
+  "black",
+  "ipykernel"
 ]
