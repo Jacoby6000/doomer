@@ -11,11 +11,12 @@ class UtilityCog(commands.Cog):
         self.bot = bot
 
     @commands.command()
+    @commands.is_owner()
     async def get_message_history(self, ctx):
         await ctx.send("Getting messages")
         all_messages = []
         for channel in ctx.guild.text_channels:
-            messages = await channel.history().flatten()
+            messages = await channel.history(limit=None).flatten()
             all_messages.append(messages)
         all_messages_flat = [i for s in all_messages for i in s]
         amfd = [
