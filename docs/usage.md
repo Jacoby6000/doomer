@@ -25,5 +25,8 @@
 > Update model settings
 > `>update_model_settings $setting_name $value $model_name`
 >  
+> Set default model
+> `>set_default_model $model_name`
+> 
 > Send last `n` messages to hastebin.
 > `>hastebin $n`

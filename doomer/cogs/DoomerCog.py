@@ -9,12 +9,13 @@ from os import path
 import atexit
 
 import discord
+from discord import channel
+from discord import guild
 from discord.ext import commands
 from discord import utils
 
 from doomer.discord_utils import *
 from doomer.settings import SETTINGS_DIR, DEFAULT_MODEL_NAME, HELP_FILE
-
 
 class DoomerCog(commands.Cog):
     def __init__(self, bot):
@@ -34,7 +35,7 @@ class DoomerCog(commands.Cog):
 
         if path.exists(SETTINGS_DIR / "settings.json"):
             with open(SETTINGS_DIR / "settings.json", "r") as infile:
-                self.settings.update(json.load(infile))
+                self.settings.update(pythonify(json.load(infile)))
 
     ## Helpers
 
@@ -44,7 +45,9 @@ class DoomerCog(commands.Cog):
         # Looks up channel names from ids
         display_settings["channel_settings"] = {
             setting: {
-                utils.get(ctx.guild.channels, id=channel).name: value
+                utils.get(ctx.guild.text_channels, id=channel).name: value
+                if utils.get(ctx.guild.text_channels, id=channel) is not None
+                else 'Unknown channel'
                 for channel, value in values.items()
             }
             for setting, values in display_settings["channel_settings"].items()
@@ -181,8 +184,7 @@ class DoomerCog(commands.Cog):
                 banter = await self.complete_text(
                     messages + "\n**[" + self.bot.user.name + "]**:", 300, stop=["**["]
                 )
-                first_msg = banter.split("**[")[0]
-                await message.channel.send(first_msg)
+                await message.channel.send(banter)
 
     ## Help Commands
 
