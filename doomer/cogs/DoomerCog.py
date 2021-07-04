@@ -9,13 +9,24 @@ from os import path
 import atexit
 
 import discord
-from discord import channel
-from discord import guild
 from discord.ext import commands
 from discord import utils
 
-from doomer.discord_utils import *
+from doomer.discord_utils import (
+    pythonify,
+    fix_emoji,
+    get_messages,
+    format_messages,
+    get_emoji_string,
+    is_number_str,
+    send_message,
+    get_channel,
+    not_a_number,
+    get_nick,
+    find_questions_and_answers,
+)
 from doomer.settings import SETTINGS_DIR, DEFAULT_MODEL_NAME, HELP_FILE
+
 
 class DoomerCog(commands.Cog):
     def __init__(self, bot):
@@ -37,7 +48,7 @@ class DoomerCog(commands.Cog):
             with open(SETTINGS_DIR / "settings.json", "r") as infile:
                 self.settings.update(pythonify(json.load(infile)))
 
-    ## Helpers
+    # Helpers
 
     def build_display_settings(self, ctx):
         display_settings = self.settings.copy()
@@ -47,7 +58,7 @@ class DoomerCog(commands.Cog):
             setting: {
                 utils.get(ctx.guild.text_channels, id=channel).name: value
                 if utils.get(ctx.guild.text_channels, id=channel) is not None
-                else 'Unknown channel'
+                else "Unknown channel"
                 for channel, value in values.items()
             }
             for setting, values in display_settings["channel_settings"].items()
@@ -71,14 +82,14 @@ class DoomerCog(commands.Cog):
         completion_text = self.default_model.parse_completion(completion)
         return self.sanitize_output(completion_text)
 
-    ## Listeners
+    # Listeners
 
     @commands.Cog.listener("on_message")
     async def on_message(self, message):
         if not message.author.bot:
             await asyncio.gather(self.react(message), self.reply(message))
 
-    ## Automatic Bot Actions
+    # Automatic Bot Actions
 
     def should_act(self, message, rate, on_self_reference=True):
         if message.content.startswith(">"):
@@ -186,7 +197,7 @@ class DoomerCog(commands.Cog):
                 )
                 await message.channel.send(banter)
 
-    ## Help Commands
+    # Help Commands
 
     @commands.command()
     async def how(self, ctx):
@@ -208,7 +219,7 @@ class DoomerCog(commands.Cog):
         embed.add_field(name="Server ID", value=f"{ctx.guild.id}")
         await ctx.send(embed=embed)
 
-    ## Settings Commands
+    # Settings Commands
 
     @commands.command()
     async def update_settings(self, ctx, setting, value):
@@ -272,7 +283,8 @@ class DoomerCog(commands.Cog):
             await ctx.send(f"Default model changed to {model_name}")
         else:
             await ctx.send(
-                f"{model_name} is not a valid model. Choices are: {', '.join(available_models)}"
+                f"{model_name} is not a valid model. "
+                f"Choices are: {', '.join(available_models)}"
             )
 
     @commands.command()
@@ -294,7 +306,7 @@ class DoomerCog(commands.Cog):
         except KeyError:
             await ctx.send(f"Model {model_name} is not a valid model.")
 
-    ## Text Generation Commands
+    # Text Generation Commands
 
     @commands.command()
     async def respond(self, ctx):

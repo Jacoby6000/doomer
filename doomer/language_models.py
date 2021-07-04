@@ -14,14 +14,15 @@ from doomer.settings import SETTINGS_DIR
 
 
 class LanguageModel(ABC):
-    def __init__(self, model_name: str) -> None:
+    def __init__(self, model_name: str, settings: dict) -> None:
         self.model_name = model_name
+        self.settings = settings
         if path.exists(SETTINGS_DIR / f"{model_name}.json"):
             with open(SETTINGS_DIR / f"{model_name}.json", "r") as infile:
                 self.settings.update(json.load(infile))
 
     @abstractmethod
-    def completion_handler(self, prompt: str, max_tokens: int, stop: list, **kwargs):
+    def completion_handler(self, prompt: str, max_tokens: int, stop: list):
         raise NotImplementedError
 
     @abstractmethod
@@ -31,12 +32,12 @@ class LanguageModel(ABC):
 
 class GPT3LanguageModel(LanguageModel):
     def __init__(self, model_name: str) -> None:
-        self.settings = {
+        settings = {
             "temperature": 100,
             "frequency_penalty": 0,
-            "presence_penalty": 50
+            "presence_penalty": 50,
         }
-        super().__init__(model_name)
+        super().__init__(model_name, settings)
 
     def completion_handler(self, prompt: str, max_tokens: int, stop: list = None):
         return openai.Completion.create(
@@ -57,12 +58,8 @@ class GPT2TransformersLanguageModel(LanguageModel):
     def __init__(self, tokenizer_name: str, model_name: str, stop: list = None) -> None:
         self._tokenizer = self.update_tokenizer(tokenizer_name)
         self._model = self.update_model(model_name)
-        self.settings = {
-            "temperature": 100,
-            "top_p": 100,
-            "top_k": 0
-        }
-        super().__init__(model_name)
+        settings = {"temperature": 100, "top_p": 100, "top_k": 0}
+        super().__init__(model_name, settings)
 
     def update_tokenizer(self, tokenizer_name: str):
         return GPT2TokenizerFast.from_pretrained(tokenizer_name)
@@ -79,7 +76,7 @@ class GPT2TransformersLanguageModel(LanguageModel):
             do_sample=True,
             max_length=max_tokens,
             top_p=hundo_to_float(self.settings["top_p"]),
-            top_k=hundo_to_float(self.settings["top_k"])
+            top_k=hundo_to_float(self.settings["top_k"]),
         )
         completion = full_completion[0][input_len:]
         completion.resize_(1, len(completion))

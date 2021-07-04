@@ -1,5 +1,4 @@
 from os import getenv
-import atexit
 
 import openai
 import discord
