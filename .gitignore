@@ -245,3 +245,5 @@ secrets/
 dev/
 data/
 output/
+settings/
+models/
