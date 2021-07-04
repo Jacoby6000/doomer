@@ -7,5 +7,6 @@ SETTINGS_DIR = ROOT_DIR / "settings"
 DOCS_DIR = ROOT_DIR / "docs"
 
 HELP_FILE = DOCS_DIR / "usage.md"
+DOTENV_PATH = ROOT_DIR / ".env"
 
 DEFAULT_MODEL_NAME = "gpt2"

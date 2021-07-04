@@ -4,10 +4,13 @@ import openai
 import discord
 from discord.ext import commands
 from cogwatch import watch
+from dotenv import load_dotenv
 
 from doomer.language_models import GPT2TransformersLanguageModel, GPT3LanguageModel
+from doomer import settings
 
 COGS_PATH = "doomer/cogs"
+load_dotenv(settings.DOTENV_PATH)
 
 
 class DoomerBot(commands.Bot):
