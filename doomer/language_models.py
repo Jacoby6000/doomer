@@ -34,7 +34,7 @@ class GPT3LanguageModel(LanguageModel):
         self.settings = {
             "temperature": 100,
             "frequency_penalty": 0,
-            "presence_penalty": 50
+            "presence_penalty": 50,
         }
         super().__init__(model_name)
 
@@ -57,11 +57,7 @@ class GPT2TransformersLanguageModel(LanguageModel):
     def __init__(self, tokenizer_name: str, model_name: str, stop: list = None) -> None:
         self._tokenizer = self.update_tokenizer(tokenizer_name)
         self._model = self.update_model(model_name)
-        self.settings = {
-            "temperature": 100,
-            "top_p": 100,
-            "top_k": 0
-        }
+        self.settings = {"temperature": 100, "top_p": 100, "top_k": 0}
         super().__init__(model_name)
 
     def update_tokenizer(self, tokenizer_name: str):
@@ -79,7 +75,7 @@ class GPT2TransformersLanguageModel(LanguageModel):
             do_sample=True,
             max_length=max_tokens,
             top_p=hundo_to_float(self.settings["top_p"]),
-            top_k=hundo_to_float(self.settings["top_k"])
+            top_k=hundo_to_float(self.settings["top_k"]),
         )
         completion = full_completion[0][input_len:]
         completion.resize_(1, len(completion))

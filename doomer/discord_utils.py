@@ -13,7 +13,7 @@ def set_if_not_set(dick, attr, val):
 
 
 def get_nick(obj):
-    if hasattr(obj, "nick") and obj.nick != None:
+    if hasattr(obj, "nick") and obj.nick is not None:
         return obj.nick
     else:
         return obj.name
@@ -99,7 +99,7 @@ async def get_messages(
     other_filter=None,
     filter_doomer=True,
 ):
-    if time == None:
+    if time is None:
         time = datetime.datetime.utcnow()
 
     num_to_fetch = 100
@@ -113,7 +113,7 @@ async def get_messages(
                 (not msg.author.bot and not msg.clean_content.startswith(">"))
                 or not filter_doomer
             )
-            and (from_user == None or from_user in msg.author.name.lower()),
+            and (from_user is None or from_user in msg.author.name.lower()),
             raw_messages,
         )
     )
@@ -175,18 +175,21 @@ def hundo_to_float(n):
 async def handle_error(ctx, error):
     send_message(ctx, str(error))
 
+
 def pythonify(json_data):
 
     correctedDict = {}
 
     for key, value in json_data.items():
         if isinstance(value, list):
-            value = [pythonify(item) if isinstance(item, dict) else item for item in value]
+            value = [
+                pythonify(item) if isinstance(item, dict) else item for item in value
+            ]
         elif isinstance(value, dict):
             value = pythonify(value)
         try:
             key = int(key)
-        except Exception as ex:
+        except Exception:
             pass
         correctedDict[key] = value
 

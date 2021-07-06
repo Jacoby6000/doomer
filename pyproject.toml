@@ -18,5 +18,8 @@ requires = [
 [tool.flit.metadata.requires-extra]
 dev = [
   "black",
-  "ipykernel"
+  "ipykernel",
+  "mypy",
+  "flake8",
+  "pytest"
 ]
