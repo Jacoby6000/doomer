@@ -43,7 +43,8 @@ class DoomerBot(commands.Bot):
 
 def start():
     bot = DoomerBot()
-    openai.api_key = getenv("OPENAI_API_KEY")
+    if getenv("OPENAI_API_KEY"):
+        openai.api_key = getenv("OPENAI_API_KEY")
     bot.run(getenv("DISCORD_API_KEY"))
 
 
