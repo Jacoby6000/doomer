@@ -22,13 +22,15 @@ class DoomerBot(commands.Bot):
 
     def initialize_models(self):
         print("Initializing Models...")
-        return {
-            "gpt3": GPT3LanguageModel(model_name="gpt3"),
+        models = {
             "gpt2": GPT2TransformersLanguageModel(
                 tokenizer_name="gpt2",
                 model_name="gpt2",
             ),
         }
+        if getenv("OPENAI_API_KEY"):
+            models["gpt3"] = GPT3LanguageModel(model_name="gpt3")
+        return models
 
     @watch(path=COGS_PATH, preload=True, default_logger=False)
     async def on_ready(self):
