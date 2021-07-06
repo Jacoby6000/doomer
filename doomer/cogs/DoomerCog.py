@@ -25,7 +25,7 @@ from doomer.discord_utils import (
     get_nick,
     find_questions_and_answers,
 )
-from doomer.settings import SETTINGS_DIR, DEFAULT_MODEL_NAME, HELP_FILE
+from doomer.settings import SETTINGS_DIR, DEFAULT_MODEL_NAME, HELP_FILE, COMMAND_PREFIX
 
 
 class DoomerCog(commands.Cog):
@@ -93,7 +93,7 @@ class DoomerCog(commands.Cog):
     # Automatic Bot Actions
 
     def should_act(self, message, rate, on_self_reference=True):
-        if message.content.startswith(">"):
+        if message.content.startswith(COMMAND_PREFIX):
             return False
 
         if on_self_reference:
@@ -119,7 +119,7 @@ class DoomerCog(commands.Cog):
         if self.should_act(message, auto_react_rate, on_self_reference=False):
             messages = list(
                 filter(
-                    lambda m: not m.content.startswith(">"),
+                    lambda m: not m.content.startswith(COMMAND_PREFIX),
                     await get_messages(message.channel, 100, filter_doomer=False),
                 )
             )
