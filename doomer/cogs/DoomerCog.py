@@ -292,6 +292,10 @@ class DoomerCog(commands.Cog):
         await send_message(ctx, json.dumps(self.build_display_settings(ctx), indent=4))
 
     @commands.command()
+    async def get_models(self, ctx):
+        await send_message(ctx, ", ".join(self.bot.models.keys()))
+
+    @commands.command()
     async def get_model_settings(self, ctx, model_name=None):
         if model_name is None:
             model_name = self.default_model_name
