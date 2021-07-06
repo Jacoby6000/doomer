@@ -63,6 +63,7 @@ class DoomerCog(commands.Cog):
             }
             for setting, values in display_settings["channel_settings"].items()
         }
+        display_settings["default_model_name"] = self.default_model_name
         return display_settings
 
     def sanitize_output(self, text):
@@ -280,6 +281,7 @@ class DoomerCog(commands.Cog):
         model_name = model_name.lower()
         if model_name in available_models:
             self.default_model = self.bot.models[model_name]
+            self.default_model_name = model_name
             await ctx.send(f"Default model changed to {model_name}")
         else:
             await ctx.send(
