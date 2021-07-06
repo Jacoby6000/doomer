@@ -8,7 +8,13 @@ was thrown together for fun.  Here be dragons.
 * Copy `.env.template` to `.env`
 * Fill in your keys in the new `.env` file.
 * Consult the discord docs for making your bot join your channel.
-* Install the `openai`, `discord`, `discord.py`, and `requests` pip packages.
+
+```bash
+python -m virtualenv venv
+source venv/bin/activate
+pip install flit
+flit install --deps=production
+```
 
 # Running
 Clone this repo, then in the project root:
@@ -30,7 +36,7 @@ stuff.  I am not responsible for the things that comes out of this AI's mouth. I
 ## Conversation
 In a channel you're comfortable with Doomer talking a whole bunch, run
 ```
->auto_reply_rate_in $channel_partial_name 80
+>update_channel_settings auto_reply_rate $channel_partial_name 80
 ```
 That would set Doomer's auto-reply rate in the given channel to 80%.
 Doomer will also always reply if you mention their name, or `@` them.
@@ -119,10 +125,10 @@ tokens, try lowering your input message count.  I find 50-80 to work well for th
 for the tokens to generate.
 
 # Settings
-There are several settings for tuning Doomer.  To tune the output, use the `frequency_penalty`, `presence_penalty`, and
-`temperature` settings.  
+There are several settings for tuning Doomer.
 
-To tune Doomer's responses and reactions, adjust the `auto_reply_rate`, `auto_react_rate`, `auto_reply_rate_in`, and 
-`auto_react_rate_in` settings.
+Doomer has a default model, which can be set with >set_default_model. Defaults to "gpt2", but can be set to "gpt3" if available.
+
+Each model has settings which can be tuned to adjust how Doomer works. Use >get_model_settings $model_name to see available settings for a model.
 
 See `>how` for more info.
