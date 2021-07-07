@@ -1,4 +1,0 @@
-openai==0.6.3
-requests==2.25.1
-discord.py==1.7.2
-discord==1.0.1

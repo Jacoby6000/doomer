@@ -1,4 +1,3 @@
 #!/bin/bash
 
-source ./.env
-python3 bot/main.py
+python3 doomer/main.py
