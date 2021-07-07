@@ -39,9 +39,9 @@ class DoomerCog(commands.Cog):
                 "auto_reply_rate": {},
                 "auto_react_rate": {},
             },
+            "default_model_name": DEFAULT_MODEL_NAME,
         }
-        self.default_model_name = DEFAULT_MODEL_NAME
-        self.default_model = self.bot.models[self.default_model_name]
+        self.default_model = self.bot.models[self.settings["default_model_name"]]
         atexit.register(self.save_settings)
 
         if path.exists(SETTINGS_DIR / "settings.json"):
@@ -63,7 +63,6 @@ class DoomerCog(commands.Cog):
             }
             for setting, values in display_settings["channel_settings"].items()
         }
-        display_settings["default_model_name"] = self.default_model_name
         return display_settings
 
     def sanitize_output(self, text):
@@ -107,7 +106,7 @@ class DoomerCog(commands.Cog):
         return should_send
 
     async def react(self, message):
-        if self.default_model_name != "gpt3":
+        if self.settings["default_model_name"] != "gpt3":
             return
 
         channel_settings = self.settings["channel_settings"]
@@ -224,6 +223,10 @@ class DoomerCog(commands.Cog):
 
     @commands.command()
     async def update_settings(self, ctx, setting, value):
+        if setting == "default_model_name":
+            await ctx.send("Use command update_default_model to change this setting")
+            return
+
         if not value.isnumeric():
             await ctx.send("You must provide a numeric value")
             return
@@ -260,7 +263,7 @@ class DoomerCog(commands.Cog):
     @commands.command()
     async def update_model_settings(self, ctx, setting, value, model_name=None):
         if model_name is None:
-            model_name = self.default_model_name
+            model_name = self.settings["default_model_name"]
 
         model = self.bot.models.get(model_name)
         if not model:
@@ -281,7 +284,7 @@ class DoomerCog(commands.Cog):
         model_name = model_name.lower()
         if model_name in available_models:
             self.default_model = self.bot.models[model_name]
-            self.default_model_name = model_name
+            self.settings["default_model_name"] = model_name
             await ctx.send(f"Default model changed to {model_name}")
         else:
             await ctx.send(
@@ -300,7 +303,7 @@ class DoomerCog(commands.Cog):
     @commands.command()
     async def get_model_settings(self, ctx, model_name=None):
         if model_name is None:
-            model_name = self.default_model_name
+            model_name = self.settings["default_model_name"]
 
         try:
             model_dict = {

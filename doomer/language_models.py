@@ -58,7 +58,7 @@ class GPT2TransformersLanguageModel(LanguageModel):
     def __init__(self, tokenizer_name: str, model_name: str, stop: list = None) -> None:
         self._tokenizer = self.update_tokenizer(tokenizer_name)
         self._model = self.update_model(model_name)
-        settings = {"temperature": 100, "top_p": 100, "top_k": 0}
+        settings = {"temperature": 100, "top_p": 100, "top_k": 0, "max_length": 1024}
         super().__init__(model_name, settings)
 
     def update_tokenizer(self, tokenizer_name: str):
@@ -67,7 +67,11 @@ class GPT2TransformersLanguageModel(LanguageModel):
     def update_model(self, model_name: str):
         return GPT2LMHeadModel.from_pretrained(model_name)
 
-    def completion_handler(self, prompt: str, max_tokens: int, stop: list = None):
+    def completion_handler(
+        self, prompt: str, max_tokens: int = None, stop: list = None
+    ):
+        if not max_tokens:
+            max_tokens = self.max_length
 
         inputs = self._tokenizer(prompt, return_tensors="pt")
         input_len = len(inputs["input_ids"][0])
