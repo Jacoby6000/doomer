@@ -25,7 +25,8 @@ from doomer.discord_utils import (
     get_nick,
     find_questions_and_answers,
 )
-from doomer.settings import SETTINGS_DIR, DEFAULT_MODEL_NAME, HELP_FILE
+from doomer.settings import SETTINGS_DIR, DEFAULT_MODEL_NAME, HELP_FILE, COMMAND_PREFIX
+
 
 
 class DoomerCog(commands.Cog):
@@ -39,9 +40,9 @@ class DoomerCog(commands.Cog):
                 "auto_reply_rate": {},
                 "auto_react_rate": {},
             },
+            "default_model_name": DEFAULT_MODEL_NAME,
         }
-        self.default_model_name = DEFAULT_MODEL_NAME
-        self.default_model = self.bot.models[self.default_model_name]
+        self.default_model = self.bot.models[self.settings["default_model_name"]]
         atexit.register(self.save_settings)
 
         if path.exists(SETTINGS_DIR / "settings.json"):
@@ -92,7 +93,7 @@ class DoomerCog(commands.Cog):
     # Automatic Bot Actions
 
     def should_act(self, message, rate, on_self_reference=True):
-        if message.content.startswith(">"):
+        if message.content.startswith(COMMAND_PREFIX):
             return False
 
         if on_self_reference:
@@ -106,7 +107,7 @@ class DoomerCog(commands.Cog):
         return should_send
 
     async def react(self, message):
-        if self.default_model_name != "gpt3":
+        if self.settings["default_model_name"] != "gpt3":
             return
 
         channel_settings = self.settings["channel_settings"]
@@ -118,7 +119,7 @@ class DoomerCog(commands.Cog):
         if self.should_act(message, auto_react_rate, on_self_reference=False):
             messages = list(
                 filter(
-                    lambda m: not m.content.startswith(">"),
+                    lambda m: not m.content.startswith(COMMAND_PREFIX),
                     await get_messages(message.channel, 100, filter_doomer=False),
                 )
             )
@@ -223,6 +224,10 @@ class DoomerCog(commands.Cog):
 
     @commands.command()
     async def update_settings(self, ctx, setting, value):
+        if setting == "default_model_name":
+            await ctx.send("Use command update_default_model to change this setting")
+            return
+
         if not value.isnumeric():
             await ctx.send("You must provide a numeric value")
             return
@@ -259,7 +264,7 @@ class DoomerCog(commands.Cog):
     @commands.command()
     async def update_model_settings(self, ctx, setting, value, model_name=None):
         if model_name is None:
-            model_name = self.default_model_name
+            model_name = self.settings["default_model_name"]
 
         model = self.bot.models.get(model_name)
         if not model:
@@ -280,10 +285,12 @@ class DoomerCog(commands.Cog):
         model_name = model_name.lower()
         if model_name in available_models:
             self.default_model = self.bot.models[model_name]
+            self.settings["default_model_name"] = model_name
             await ctx.send(f"Default model changed to {model_name}")
         else:
             await ctx.send(
-                f"{model_name} is not a valid model. Choices are: {', '.join(available_models)}"
+                f"{model_name} is not a valid model. "
+                f"Choices are: {', '.join(available_models)}"
             )
 
     @commands.command()
@@ -291,9 +298,13 @@ class DoomerCog(commands.Cog):
         await send_message(ctx, json.dumps(self.build_display_settings(ctx), indent=4))
 
     @commands.command()
+    async def get_models(self, ctx):
+        await send_message(ctx, ", ".join(self.bot.models.keys()))
+
+    @commands.command()
     async def get_model_settings(self, ctx, model_name=None):
         if model_name is None:
-            model_name = self.default_model_name
+            model_name = self.settings["default_model_name"]
 
         try:
             model_dict = {

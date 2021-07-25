@@ -1,6 +1,8 @@
 import datetime
 import re
 
+from doomer import settings
+
 
 def is_number_str(string):
     return bool(re.match("^\\d+$", string))
@@ -110,8 +112,8 @@ async def get_messages(
     filtered_messages = list(
         filter(
             lambda msg: (
-                (not msg.author.bot and not msg.clean_content.startswith(">"))
-                or not filter_doomer
+                (not msg.author.bot or not filter_doomer)
+                and not msg.clean_content.startswith(settings.COMMAND_PREFIX)
             )
             and (from_user is None or from_user in msg.author.name.lower()),
             raw_messages,

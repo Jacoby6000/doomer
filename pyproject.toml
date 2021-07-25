@@ -13,7 +13,8 @@ requires = [
   "cogwatch",
   "transformers[torch]",
   "pandas",
-  "discord.py"
+  "discord.py",
+  "python-dotenv"
 ]
 [tool.flit.metadata.requires-extra]
 dev = [
