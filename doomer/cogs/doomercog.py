@@ -28,12 +28,11 @@ from doomer.discord_utils import (
 from doomer.settings import SETTINGS_DIR, DEFAULT_MODEL_NAME, HELP_FILE, COMMAND_PREFIX
 
 
-
 class DoomerCog(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
         self.settings = {
-            "auto_reply_rate": 100,
+            "auto_reply_rate": 1,
             "auto_react_rate": 0,
             "auto_reply_messages": 10,
             "channel_settings": {
@@ -71,6 +70,7 @@ class DoomerCog(commands.Cog):
 
     async def complete_text(self, prompt, max_tokens, stop=None):
         loop = asyncio.get_running_loop()
+        print(prompt)
         completion = await loop.run_in_executor(
             None,
             partial(
@@ -194,7 +194,7 @@ class DoomerCog(commands.Cog):
                     )
                 )
                 banter = await self.complete_text(
-                    messages + "\n**[" + self.bot.user.name + "]**:", 300, stop=["**["]
+                    messages + "\n**[" + self.bot.user.name + "]**: ", 300, stop=["**["]
                 )
                 await message.channel.send(banter)
 
