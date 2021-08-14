@@ -52,17 +52,15 @@ class DoomerCog(commands.Cog):
 
     def build_display_settings(self, ctx):
         display_settings = self.settings.copy()
+        new_channel_settings = {}
+        for setting, values in display_settings["channel_settings"].items():
+            new_channel_settings[setting] = {}
+            for channel_id, value in values.items():
+                channel = utils.get(ctx.guild.text_channels, id=channel_id)
+                if channel:
+                    new_channel_settings[setting][channel.name] = value
+        display_settings["channel_settings"] = new_channel_settings
 
-        # Looks up channel names from ids
-        display_settings["channel_settings"] = {
-            setting: {
-                utils.get(ctx.guild.text_channels, id=channel).name: value
-                if utils.get(ctx.guild.text_channels, id=channel) is not None
-                else "Unknown channel"
-                for channel, value in values.items()
-            }
-            for setting, values in display_settings["channel_settings"].items()
-        }
         return display_settings
 
     def sanitize_output(self, text):
