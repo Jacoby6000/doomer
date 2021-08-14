@@ -235,6 +235,7 @@ class DoomerCog(commands.Cog):
         valid_settings = self.settings.keys()
         if setting in valid_settings:
             self.settings[setting] = int(value)
+            self.save_settings()
             await ctx.send(f"Setting {setting} set to value {value}")
         else:
             await ctx.send(f"Setting {setting} is not valid.")
@@ -253,6 +254,7 @@ class DoomerCog(commands.Cog):
                     filter(lambda x: x.name == channel_name, ctx.guild.text_channels)
                 )
                 channel_settings[setting][int(channel.id)] = int(value)
+                self.save_settings()
                 await ctx.send(
                     f"Setting {setting} set to value {value} for channel {channel_name}"
                 )
@@ -275,6 +277,7 @@ class DoomerCog(commands.Cog):
             if value.isnumeric():
                 value = int(value)
             model.settings[setting] = value
+            self.save_settings()
             await ctx.send(f"Setting model {model_name} setting {setting} to {value}")
         else:
             await ctx.send(f"Model {model_name} does not have setting {setting}")
@@ -286,6 +289,7 @@ class DoomerCog(commands.Cog):
         if model_name in available_models:
             self.default_model = self.bot.models[model_name]
             self.settings["default_model_name"] = model_name
+            self.save_settings()
             await ctx.send(f"Default model changed to {model_name}")
         else:
             await ctx.send(
