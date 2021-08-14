@@ -12,7 +12,6 @@ requires = [
   "requests",
   "cogwatch",
   "transformers[torch]",
-  "pandas",
   "discord.py",
   "python-dotenv"
 ]
