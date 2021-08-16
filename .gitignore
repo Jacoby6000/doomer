@@ -247,3 +247,5 @@ data/
 output/
 settings/
 models/
+
+settings.json

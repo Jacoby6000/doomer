@@ -188,12 +188,12 @@ class DoomerCog(commands.Cog):
                 messages = fix_emoji(
                     format_messages(
                         await get_messages(
-                            message.channel, self.settings["auto_reply_messages"]
+                            message.channel, self.settings["auto_reply_messages"], filter_doomer=False
                         ),
                     )
                 )
                 banter = await self.complete_text(
-                    messages + "\n**[" + self.bot.user.name + "]**:", 300, stop=["**["]
+                    messages + "\n**[" + get_nick(self.bot.user) + "]**:", 300, stop=["**["]
                 )
                 await message.channel.send(banter)
 

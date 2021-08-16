@@ -15,7 +15,7 @@ DOTENV_PATH = ROOT_DIR / ".env"
 
 COGS_PATH = "doomer/cogs"
 
-DEFAULT_MODEL_NAME = "gpt2"
+DEFAULT_MODEL_NAME = "gpt3"
 
 load_dotenv(DOTENV_PATH)
 
