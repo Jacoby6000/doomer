@@ -41,12 +41,13 @@ class DoomerCog(commands.Cog):
             },
             "default_model_name": DEFAULT_MODEL_NAME,
         }
-        self.default_model = self.bot.models[self.settings["default_model_name"]]
         atexit.register(self.save_settings)
 
         if path.exists(SETTINGS_DIR / "settings.json"):
             with open(SETTINGS_DIR / "settings.json", "r") as infile:
                 self.settings.update(pythonify(json.load(infile)))
+
+        self.default_model = self.bot.models[self.settings["default_model_name"]]
 
     # Helpers
 
@@ -68,17 +69,19 @@ class DoomerCog(commands.Cog):
 
     async def complete_text(self, prompt, max_tokens, stop=None):
         loop = asyncio.get_running_loop()
-        print(prompt)
+        max_tokens = int(max_tokens)
         completion = await loop.run_in_executor(
             None,
             partial(
                 self.default_model.completion_handler,
                 prompt=prompt,
-                max_tokens=int(max_tokens),
+                max_tokens=max_tokens,
                 stop=stop,
             ),
         )
-        completion_text = self.default_model.parse_completion(completion)
+        completion_text = self.default_model.parse_completion(
+            completion=completion, stop=stop
+        )
         return self.sanitize_output(completion_text)
 
     # Listeners
@@ -187,7 +190,9 @@ class DoomerCog(commands.Cog):
                 messages = fix_emoji(
                     format_messages(
                         await get_messages(
-                            message.channel, self.settings["auto_reply_messages"]
+                            message.channel,
+                            self.settings["auto_reply_messages"],
+                            filter_bot=False,
                         ),
                     )
                 )
