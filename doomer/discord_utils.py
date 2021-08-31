@@ -99,7 +99,7 @@ async def get_messages(
     iteration=0,
     from_user=None,
     other_filter=None,
-    filter_doomer=True,
+    filter_bot=True,
 ):
     if time is None:
         time = datetime.datetime.utcnow()
@@ -112,7 +112,7 @@ async def get_messages(
     filtered_messages = list(
         filter(
             lambda msg: (
-                (not msg.author.bot or not filter_doomer)
+                (not msg.author.bot or not filter_bot)
                 and not msg.clean_content.startswith(settings.COMMAND_PREFIX)
             )
             and (from_user is None or from_user in msg.author.name.lower()),
