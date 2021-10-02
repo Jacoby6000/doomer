@@ -5,6 +5,7 @@ import json
 
 import openai
 from transformers import GPT2LMHeadModel, GPT2TokenizerFast, GPTNeoForCausalLM
+import requests
 
 from doomer.discord_utils import hundo_to_float
 from doomer.settings import SETTINGS_DIR
@@ -49,6 +50,33 @@ class GPT3LanguageModel(LanguageModel):
 
     def parse_completion(self, completion: Any, **kwargs: Any) -> str:
         text = completion.choices[0].text
+        return text
+
+
+class GPTJLanguageModel(LanguageModel):
+    def __init__(self, model_name: str, api_key: str) -> None:
+        settings = {"temperature": 100, "min_tokens": 20}
+        self.api_url = "https://nlp-server.exafunction.com/text_completion"
+        self.api_key = api_key
+        super().__init__(model_name, settings)
+
+    def completion_handler(self, prompt: str, max_tokens: int, **kwargs: any):
+        headers = {
+            "Authorization": f"Bearer {self.api_key}",
+        }
+        payload = {
+            "prompt": prompt,
+            "max_length": max_tokens,
+            "min_length": self.settings["min_tokens"],
+            "temperature": hundo_to_float(self.settings["temperature"]),
+            "remove_input": "true",
+        }
+        response = requests.post(self.api_url, json=payload, headers=headers)
+        return response.json()
+
+    def parse_completion(self, completion: Any, **kwargs: Any) -> str:
+        print(completion)
+        text = completion["text"]
         return text
 
 
