@@ -28,12 +28,11 @@ from doomer.discord_utils import (
 from doomer.settings import SETTINGS_DIR, DEFAULT_MODEL_NAME, HELP_FILE, COMMAND_PREFIX
 
 
-
 class DoomerCog(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
         self.settings = {
-            "auto_reply_rate": 100,
+            "auto_reply_rate": 1,
             "auto_react_rate": 0,
             "auto_reply_messages": 10,
             "channel_settings": {
@@ -42,28 +41,27 @@ class DoomerCog(commands.Cog):
             },
             "default_model_name": DEFAULT_MODEL_NAME,
         }
-        self.default_model = self.bot.models[self.settings["default_model_name"]]
         atexit.register(self.save_settings)
 
         if path.exists(SETTINGS_DIR / "settings.json"):
             with open(SETTINGS_DIR / "settings.json", "r") as infile:
                 self.settings.update(pythonify(json.load(infile)))
 
+        self.default_model = self.bot.models[self.settings["default_model_name"]]
+
     # Helpers
 
     def build_display_settings(self, ctx):
         display_settings = self.settings.copy()
+        new_channel_settings = {}
+        for setting, values in display_settings["channel_settings"].items():
+            new_channel_settings[setting] = {}
+            for channel_id, value in values.items():
+                channel = utils.get(ctx.guild.text_channels, id=channel_id)
+                if channel:
+                    new_channel_settings[setting][channel.name] = value
+        display_settings["channel_settings"] = new_channel_settings
 
-        # Looks up channel names from ids
-        display_settings["channel_settings"] = {
-            setting: {
-                utils.get(ctx.guild.text_channels, id=channel).name: value
-                if utils.get(ctx.guild.text_channels, id=channel) is not None
-                else "Unknown channel"
-                for channel, value in values.items()
-            }
-            for setting, values in display_settings["channel_settings"].items()
-        }
         return display_settings
 
     def sanitize_output(self, text):
@@ -71,16 +69,19 @@ class DoomerCog(commands.Cog):
 
     async def complete_text(self, prompt, max_tokens, stop=None):
         loop = asyncio.get_running_loop()
+        max_tokens = int(max_tokens)
         completion = await loop.run_in_executor(
             None,
             partial(
                 self.default_model.completion_handler,
                 prompt=prompt,
-                max_tokens=int(max_tokens),
+                max_tokens=max_tokens,
                 stop=stop,
             ),
         )
-        completion_text = self.default_model.parse_completion(completion)
+        completion_text = self.default_model.parse_completion(
+            completion=completion, stop=stop
+        )
         return self.sanitize_output(completion_text)
 
     # Listeners
@@ -189,12 +190,14 @@ class DoomerCog(commands.Cog):
                 messages = fix_emoji(
                     format_messages(
                         await get_messages(
-                            message.channel, self.settings["auto_reply_messages"]
+                            message.channel,
+                            self.settings["auto_reply_messages"],
+                            filter_bot=False,
                         ),
                     )
                 )
                 banter = await self.complete_text(
-                    messages + "\n**[" + self.bot.user.name + "]**:", 300, stop=["**["]
+                    messages + "\n**[" + get_nick(self.bot.user) + "]**:", 300, stop=["**["]
                 )
                 await message.channel.send(banter)
 
@@ -235,6 +238,7 @@ class DoomerCog(commands.Cog):
         valid_settings = self.settings.keys()
         if setting in valid_settings:
             self.settings[setting] = int(value)
+            self.save_settings()
             await ctx.send(f"Setting {setting} set to value {value}")
         else:
             await ctx.send(f"Setting {setting} is not valid.")
@@ -253,6 +257,7 @@ class DoomerCog(commands.Cog):
                     filter(lambda x: x.name == channel_name, ctx.guild.text_channels)
                 )
                 channel_settings[setting][int(channel.id)] = int(value)
+                self.save_settings()
                 await ctx.send(
                     f"Setting {setting} set to value {value} for channel {channel_name}"
                 )
@@ -275,6 +280,7 @@ class DoomerCog(commands.Cog):
             if value.isnumeric():
                 value = int(value)
             model.settings[setting] = value
+            self.save_settings()
             await ctx.send(f"Setting model {model_name} setting {setting} to {value}")
         else:
             await ctx.send(f"Model {model_name} does not have setting {setting}")
@@ -286,6 +292,7 @@ class DoomerCog(commands.Cog):
         if model_name in available_models:
             self.default_model = self.bot.models[model_name]
             self.settings["default_model_name"] = model_name
+            self.save_settings()
             await ctx.send(f"Default model changed to {model_name}")
         else:
             await ctx.send(

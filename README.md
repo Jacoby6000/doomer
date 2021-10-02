@@ -13,7 +13,7 @@ was thrown together for fun.  Here be dragons.
 python -m virtualenv venv
 source venv/bin/activate
 pip install flit
-flit install --deps=production
+flit install --deps=production --pth-file
 ```
 
 # Running
