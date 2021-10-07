@@ -2,6 +2,7 @@ import datetime
 import re
 
 from doomer import settings
+import discord
 
 
 def is_number_str(string):
@@ -22,7 +23,7 @@ def get_nick(obj):
 
 
 async def send_message(ctx, messageObj):
-    message = str(messageObj)
+    message = insert_emoji(ctx.guild, str(messageObj))
     messages = [message[i : i + 2000] for i in range(0, len(message), 2000)]
     for m in messages:
         await ctx.send(m)
@@ -85,6 +86,21 @@ def get_emoji_string(emoji, emoji_names=True, colons=True):
             return str(emoji.id)
     else:
         return emoji
+
+def insert_emoji(guild, s):
+    splits = s.split(":")
+    with_emoji = ""
+    for s in splits: 
+        lookup = discord.utils.get(guild.emojis, name = s)
+        print(s)
+        print(lookup)
+        if lookup:
+            with_emoji += "<" + ":" + lookup.name + ":" + str(lookup.id) + ">"
+        else:
+            with_emoji += s + ":;:"
+
+
+    return with_emoji.replace(":;:<", "<").replace(":;:", ":").strip(":")
 
 
 def fix_emoji(in_str):
