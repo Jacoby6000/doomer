@@ -6,6 +6,7 @@ from cogwatch import watch
 from doomer.language_models import (
     GPT2TransformersLanguageModel,
     GPT3LanguageModel,
+    GPTJLanguageModel,
 )
 from doomer import settings
 
@@ -28,7 +29,12 @@ class DoomerBot(commands.Bot):
             ),
         }
         if settings.OPENAI_API_KEY:
+            openai.api_key = settings.OPENAI_API_KEY
             models["gpt3"] = GPT3LanguageModel(model_name="gpt3")
+        if settings.EXAFUNCTION_API_KEY:
+            models["gptj"] = GPTJLanguageModel(
+                model_name="gptj", api_key=settings.EXAFUNCTION_API_KEY
+            )
         return models
 
     @watch(path=settings.COGS_PATH, preload=True, default_logger=False)
@@ -44,8 +50,6 @@ class DoomerBot(commands.Bot):
 
 def start():
     bot = DoomerBot()
-    if settings.OPENAI_API_KEY:
-        openai.api_key = settings.OPENAI_API_KEY
     bot.run(settings.DISCORD_API_KEY)
 
 
