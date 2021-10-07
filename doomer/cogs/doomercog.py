@@ -24,6 +24,7 @@ from doomer.discord_utils import (
     not_a_number,
     get_nick,
     find_questions_and_answers,
+    insert_emoji
 )
 from doomer.settings import SETTINGS_DIR, DEFAULT_MODEL_NAME, HELP_FILE, COMMAND_PREFIX
 
@@ -199,7 +200,7 @@ class DoomerCog(commands.Cog):
                 banter = await self.complete_text(
                     messages + "\n**[" + get_nick(self.bot.user) + "]**:", 300, stop=["**["]
                 )
-                await message.channel.send(banter)
+                await message.channel.send(insert_emoji(message.guild, banter))
 
     # Help Commands
 
