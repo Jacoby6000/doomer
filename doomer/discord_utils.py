@@ -92,13 +92,10 @@ def insert_emoji(guild, s):
     with_emoji = ""
     for s in splits: 
         lookup = discord.utils.get(guild.emojis, name = s)
-        print(s)
-        print(lookup)
         if lookup:
             with_emoji += "<" + ":" + lookup.name + ":" + str(lookup.id) + ">"
         else:
             with_emoji += s + ":;:"
-
 
     return with_emoji.replace(":;:<", "<").replace(":;:", ":").strip(":")
 
