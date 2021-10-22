@@ -11,6 +11,7 @@ import atexit
 import discord
 from discord.ext import commands
 from discord import utils
+import SettingsManager
 
 from doomer.discord_utils import (
     pythonify,
@@ -32,16 +33,14 @@ from doomer.settings import SETTINGS_DIR, DEFAULT_MODEL_NAME, HELP_FILE, COMMAND
 class DoomerCog(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
-        self.settings = {
-            "auto_reply_rate": 1,
+        initial_settings = {
+            "auto_reply": { "rate": 1, "mode": "flat_rate" },
             "auto_react_rate": 0,
             "auto_reply_messages": 10,
-            "channel_settings": {
-                "auto_reply_rate": {},
-                "auto_react_rate": {},
-            },
+            "channel_settings": {},
             "default_model_name": DEFAULT_MODEL_NAME,
         }
+        self.settings = SettingsManager(initial_settings, setting_rules)
         atexit.register(self.save_settings)
 
         if path.exists(SETTINGS_DIR / "settings.json"):
@@ -55,12 +54,12 @@ class DoomerCog(commands.Cog):
     def build_display_settings(self, ctx):
         display_settings = self.settings.copy()
         new_channel_settings = {}
-        for setting, values in display_settings["channel_settings"].items():
-            new_channel_settings[setting] = {}
-            for channel_id, value in values.items():
+        for channel_id, values in display_settings["channel_settings"].items():
+            new_channel_settings[channel_id] = {}
+            for setting, value in values.items():
                 channel = utils.get(ctx.guild.text_channels, id=channel_id)
                 if channel:
-                    new_channel_settings[setting][channel.name] = value
+                    new_channel_settings[channel.name][setting] = value
         display_settings["channel_settings"] = new_channel_settings
 
         return display_settings
@@ -105,6 +104,7 @@ class DoomerCog(commands.Cog):
             for user in message.mentions:
                 if user.id == self.bot.user.id:
                     return True
+
         should_send = random.randint(0, 100) < rate
         return should_send
 
@@ -113,12 +113,12 @@ class DoomerCog(commands.Cog):
             return
 
         channel_settings = self.settings["channel_settings"]
-        if message.channel.id in channel_settings["auto_react_rate"]:
-            auto_react_rate = channel_settings["auto_react_rate"][message.channel.id]
+        if message.channel.id in channel_settings["auto_react_settings"]:
+            auto_react_settings = channel_settings["auto_react_settings"][message.channel.id]
         else:
-            auto_react_rate = self.settings["auto_react_rate"]
+            auto_react_settings = self.settings["auto_react_settings"]
 
-        if self.should_act(message, auto_react_rate, on_self_reference=False):
+        if self.should_act(message, auto_react_settings, on_self_reference=False):
             messages = list(
                 filter(
                     lambda m: not m.content.startswith(COMMAND_PREFIX),
@@ -181,12 +181,12 @@ class DoomerCog(commands.Cog):
 
     async def reply(self, message, force=False):
         channel_settings = self.settings["channel_settings"]
-        if message.channel.id in channel_settings["auto_reply_rate"]:
-            auto_reply_rate = channel_settings["auto_reply_rate"][message.channel.id]
+        if message.channel.id in channel_settings["auto_reply_settings"]:
+            auto_reply_settings = channel_settings["auto_reply_settings"][message.channel.id]
         else:
-            auto_reply_rate = self.settings["auto_reply_rate"]
+            auto_reply_settings = self.settings["auto_reply_settings"]
 
-        if force or self.should_act(message, auto_reply_rate):
+        if force or self.should_act(message, auto_reply_settings):
             async with message.channel.typing():
                 messages = fix_emoji(
                     format_messages(
@@ -245,9 +245,9 @@ class DoomerCog(commands.Cog):
             await ctx.send(f"Setting {setting} is not valid.")
 
     @commands.command()
-    async def update_channel_settings(self, ctx, setting, channel_name, value):
+    async def update_channel_settings(self, ctx, channel_name, group, setting, value):
         if not value.isnumeric():
-            await ctx.send("You must provide a numeric value")
+            await ctx.send("You must provide a numeric value (lame message. Jonathan wrote this one)")
             return
 
         channel_settings = self.settings["channel_settings"]
@@ -257,7 +257,7 @@ class DoomerCog(commands.Cog):
                 channel = next(
                     filter(lambda x: x.name == channel_name, ctx.guild.text_channels)
                 )
-                channel_settings[setting][int(channel.id)] = int(value)
+                channel_settings[int(channel.id)][setting] = value
                 self.save_settings()
                 await ctx.send(
                     f"Setting {setting} set to value {value} for channel {channel_name}"
@@ -497,6 +497,62 @@ class DoomerCog(commands.Cog):
         for model_name, model in self.bot.models.items():
             with open(SETTINGS_DIR / f"{model_name}.json", "w") as f:
                 json.dump(model.settings, f)
+
+    def calculate_rate(settings):
+        if settings["type"] == "flat_rate":
+            return settings["rate"]
+
+
+    def setting_rules():
+        reply_settings = {
+            "auto_reply": {
+                "mode": {
+                    "__valid_values": ["flat_rate", "dynamic"]
+                },
+                "rate": {
+                    "__conversion": lambda s: float(s),
+                    "__validator": lambda n: n <= 100 and n >= 0
+                    "__help": "Only applicable when mode is 'flat_rate'"
+                },
+                "message_density_multiplier": {
+                    "__conversion": lambda s: float(s),
+                    "__validator": lambda n: n >= 0
+                    "__help": "Any positive float. Messages/Minute is multiplied by this value to produce a portion of the"
+                }
+                "author_diversity_multiplier": {
+                    "__conversion": lambda s: float(s),
+                    "__validator": lambda n: n >= 0
+                    "__help": "Any positive float. Messages/Minute is multiplied by this value to produce a portion of the reply_rate"
+                }
+                "message_history_duration": {
+                    "__conversion": lambda s: int(s),
+                    "__validator": lambda n: n >= 0
+                    "__help": "Any positive int. Number of seconds of messages to read to calculate the multipliers."
+                }
+            }
+        }
+        
+        react_settings = {
+            "auto_react_rate": {
+                "__conversion": lambda s: float(s),
+                "__validator": lambda n: n <= 100 and n >= 0
+                "__help": "Any valid float between 0 and 100 (inclusive). Only applicable to the 'flat_rate' reply mode. 100 means reply 100% of the time."
+            }
+        }
+
+        root_settings = {
+            "auto_reply_messages": {
+                "__conversion": lambda n: float(n),
+                "__validator": lambda n: n >= 1
+            }
+            "channel_settings": {
+                "$var": { **reply_settings, **react_settings } ,
+            },
+            "default_model_name": {
+                "__valid_values": self.bot.models.keys()
+            },
+            **reply_settings, **react_settings
+        }
 
 
 def setup(bot):
