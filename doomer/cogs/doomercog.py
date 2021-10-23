@@ -24,7 +24,7 @@ from doomer.discord_utils import (
     not_a_number,
     get_nick,
     find_questions_and_answers,
-    insert_emoji
+    insert_emoji,
 )
 from doomer.settings import SETTINGS_DIR, DEFAULT_MODEL_NAME, HELP_FILE, COMMAND_PREFIX
 
@@ -41,6 +41,7 @@ class DoomerCog(commands.Cog):
                 "auto_react_rate": {},
             },
             "default_model_name": DEFAULT_MODEL_NAME,
+            "dropout_chance": 0,
         }
         atexit.register(self.save_settings)
 
@@ -198,7 +199,9 @@ class DoomerCog(commands.Cog):
                     )
                 )
                 banter = await self.complete_text(
-                    messages + "\n**[" + get_nick(self.bot.user) + "]**:", 300, stop=["**["]
+                    messages + "\n**[" + get_nick(self.bot.user) + "]**:",
+                    300,
+                    stop=["**["],
                 )
                 await message.channel.send(insert_emoji(message.guild, banter))
 

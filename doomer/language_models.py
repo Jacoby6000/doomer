@@ -4,7 +4,7 @@ from os import path
 import json
 
 import openai
-from transformers import GPT2LMHeadModel, GPT2TokenizerFast, GPTNeoForCausalLM
+from transformers import GPT2LMHeadModel, GPT2TokenizerFast
 import requests
 
 from doomer.discord_utils import hundo_to_float
@@ -74,16 +74,23 @@ class GPTJLanguageModel(LanguageModel):
         response = requests.post(self.api_url, json=payload, headers=headers)
         return response.json()
 
-    def parse_completion(self, completion: Any, **kwargs: Any) -> str:
-        print(completion)
+    def parse_completion(
+        self, completion: Any, stop: list[str] = [], **kwargs: Any
+    ) -> str:
         text = completion["text"]
+        if stop:
+            for seq in stop:
+                if seq in text:
+                    return text.split(seq)[0]
         return text
 
 
 class GPT2TransformersLanguageModel(LanguageModel):
     def __init__(self, tokenizer_name: str, model_name: str) -> None:
-        self._tokenizer = self.update_tokenizer(tokenizer_name)
-        self._model = self.update_model(model_name)
+        self.tokenizer_name = tokenizer_name
+        self.model_name = model_name
+        self._tokenizer = None
+        self._model = None
         settings = {"temperature": 100, "top_p": 100, "top_k": 0, "max_length": 1024}
         super().__init__(model_name, settings)
 
@@ -94,49 +101,15 @@ class GPT2TransformersLanguageModel(LanguageModel):
         return GPT2LMHeadModel.from_pretrained(model_name)
 
     def completion_handler(self, prompt: str, max_tokens: int = None, **kwargs: Any):
+        if not self._tokenizer:
+            print(f"Loading tokenizer {self.tokenizer_name}")
+            self._tokenizer = self.update_tokenizer(self.tokenizer_name)
+        if not self._model:
+            print(f"Loading model {self.model_name}")
+            self._model = self.update_model(self.model_name)
+
         if not max_tokens:
-            max_tokens = self.max_length
-
-        inputs = self._tokenizer(prompt, return_tensors="pt")
-        print(inputs)
-        print(type(max_tokens))
-        input_len = len(inputs["input_ids"][0])
-        full_completion = self._model.generate(
-            **inputs,
-            do_sample=True,
-            max_length=input_len + max_tokens,
-            top_p=hundo_to_float(self.settings["top_p"]),
-            top_k=hundo_to_float(self.settings["top_k"]),
-        )
-        completion = full_completion[0][input_len:]
-        completion.resize_(1, len(completion))
-        return completion
-
-    def parse_completion(self, completion: Any, stop: list[str], **kwargs: Any) -> str:
-        text = self._tokenizer.decode(completion[0], skip_special_tokens=True)
-        if stop:
-            for seq in stop:
-                if seq in text:
-                    return text.split(seq)[0]
-        return text
-
-
-class GPTNeoTransformersLanguageModel(LanguageModel):
-    def __init__(self, tokenizer_name: str, model_name: str) -> None:
-        self._tokenizer = self.update_tokenizer(tokenizer_name)
-        self._model = self.update_model(model_name)
-        settings = {"temperature": 100, "top_p": 100, "top_k": 0, "max_length": 1024}
-        super().__init__(model_name, settings)
-
-    def update_tokenizer(self, tokenizer_name: str):
-        return GPT2TokenizerFast.from_pretrained(tokenizer_name)
-
-    def update_model(self, model_name: str):
-        return GPTNeoForCausalLM.from_pretrained(model_name)
-
-    def completion_handler(self, prompt: str, max_tokens: int = None, **kwargs: Any):
-        if not max_tokens:
-            max_tokens = self.max_length
+            max_tokens = self.settings["max_length"]
 
         inputs = self._tokenizer(prompt, return_tensors="pt")
         input_len = len(inputs["input_ids"][0])
@@ -151,7 +124,9 @@ class GPTNeoTransformersLanguageModel(LanguageModel):
         completion.resize_(1, len(completion))
         return completion
 
-    def parse_completion(self, completion: Any, stop: list[str], **kwargs: Any) -> str:
+    def parse_completion(
+        self, completion: Any, stop: list[str] = [], **kwargs: Any
+    ) -> str:
         text = self._tokenizer.decode(completion[0], skip_special_tokens=True)
         if stop:
             for seq in stop:
