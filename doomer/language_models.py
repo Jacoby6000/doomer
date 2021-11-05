@@ -59,7 +59,6 @@ class ExafunctionGPTJLanguageModel(LanguageModel):
             "Authorization": f"Bearer {self.api_key}",
             "Content-Type": "application/json",
         }
-        print(headers)
         payload = {
             "prompt": prompt,
             "max_length": max_tokens,
@@ -68,8 +67,6 @@ class ExafunctionGPTJLanguageModel(LanguageModel):
             "remove_input": "true",
         }
         response = requests.post(self.api_url, json=payload, headers=headers)
-        print(curlify(response.request))
-        print(response.json())
         completion = response.json()
         completion_text = completion["text"]
         return completion_text
