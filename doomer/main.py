@@ -5,8 +5,9 @@ from cogwatch import watch
 
 from doomer.language_models import (
     GPT2TransformersLanguageModel,
-    GPT3LanguageModel,
-    GPTJLanguageModel,
+    ExafunctionGPTJLanguageModel,
+    OpenAIGPT3LanguageModel,
+    AI21JurassicLanguageModel,
 )
 from doomer import settings
 
@@ -30,10 +31,18 @@ class DoomerBot(commands.Bot):
         }
         if settings.OPENAI_API_KEY:
             openai.api_key = settings.OPENAI_API_KEY
-            models["gpt3"] = GPT3LanguageModel(model_name="gpt3")
+            model_name = "openai-gpt3"
+            models[model_name] = OpenAIGPT3LanguageModel(model_name=model_name)
         if settings.EXAFUNCTION_API_KEY:
-            models["gptj"] = GPTJLanguageModel(
-                model_name="gptj", api_key=settings.EXAFUNCTION_API_KEY
+            model_name = "exafunction-gptj"
+            models[model_name] = ExafunctionGPTJLanguageModel(
+                api_key=settings.EXAFUNCTION_API_KEY,
+                model_name=model_name,
+            )
+        if settings.AI21_API_KEY:
+            model_name = "ai21-jurassic"
+            models[model_name] = AI21JurassicLanguageModel(
+                api_key=settings.AI21_API_KEY, model_name=model_name
             )
         return models
 

@@ -24,7 +24,7 @@ from doomer.discord_utils import (
     not_a_number,
     get_nick,
     find_questions_and_answers,
-    insert_emoji
+    insert_emoji,
 )
 from doomer.settings import SETTINGS_DIR, DEFAULT_MODEL_NAME, HELP_FILE, COMMAND_PREFIX
 
@@ -71,7 +71,7 @@ class DoomerCog(commands.Cog):
     async def complete_text(self, prompt, max_tokens, stop=None):
         loop = asyncio.get_running_loop()
         max_tokens = int(max_tokens)
-        completion = await loop.run_in_executor(
+        completion_text = await loop.run_in_executor(
             None,
             partial(
                 self.default_model.completion_handler,
@@ -79,9 +79,6 @@ class DoomerCog(commands.Cog):
                 max_tokens=max_tokens,
                 stop=stop,
             ),
-        )
-        completion_text = self.default_model.parse_completion(
-            completion=completion, stop=stop
         )
         return self.sanitize_output(completion_text)
 
@@ -198,7 +195,9 @@ class DoomerCog(commands.Cog):
                     )
                 )
                 banter = await self.complete_text(
-                    messages + "\n**[" + get_nick(self.bot.user) + "]**:", 300, stop=["**["]
+                    messages + "\n**[" + get_nick(self.bot.user) + "]**:",
+                    300,
+                    stop=["**["],
                 )
                 await message.channel.send(insert_emoji(message.guild, banter))
 
