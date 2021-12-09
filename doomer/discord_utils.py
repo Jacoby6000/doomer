@@ -87,11 +87,12 @@ def get_emoji_string(emoji, emoji_names=True, colons=True):
     else:
         return emoji
 
+
 def insert_emoji(guild, s):
     splits = s.split(":")
     with_emoji = ""
-    for s in splits: 
-        lookup = discord.utils.get(guild.emojis, name = s)
+    for s in splits:
+        lookup = discord.utils.get(guild.emojis, name=s)
         if lookup:
             with_emoji += "<" + ":" + lookup.name + ":" + str(lookup.id) + ">"
         else:
@@ -209,3 +210,13 @@ def pythonify(json_data):
         correctedDict[key] = value
 
     return correctedDict
+
+
+def curlify(request):
+    command = "curl -X {method} -H {headers} -d '{data}' '{uri}'"
+    method = request.method
+    uri = request.url
+    data = request.body
+    headers = ['"{0}: {1}"'.format(k, v) for k, v in request.headers.items()]
+    headers = " -H ".join(headers)
+    return command.format(method=method, headers=headers, data=data, uri=uri)
