@@ -127,7 +127,7 @@ for the tokens to generate.
 # Settings
 There are several settings for tuning Doomer.
 
-Doomer has a default model, which can be set with >set_default_model. Defaults to "gpt2", but can be set to "gpt3" if available.
+Doomer has a default model, which can be set with >set_default_model. Defaults to "openai-gpt2", but can be set to "openai-gpt3" if available.
 
 Each model has settings which can be tuned to adjust how Doomer works. Use >get_model_settings $model_name to see available settings for a model.
 

@@ -106,7 +106,7 @@ class DoomerCog(commands.Cog):
         return should_send
 
     async def react(self, message):
-        if self.settings["default_model_name"] != "gpt3":
+        if self.settings["default_model_name"] != "openai-gpt3":
             return
 
         channel_settings = self.settings["channel_settings"]
