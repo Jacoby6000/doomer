@@ -54,6 +54,8 @@ def format_messages(messages, emoji_names=True, emphasize_names=True):
     return "\n".join(
         map(
             lambda msg: pre
+            + msg.created_at.strftime("%I:%M:%S %p")
+            + " "
             + get_nick(msg.author)
             + post
             + ": "

@@ -119,7 +119,7 @@ class DoomerCog(commands.Cog):
             messages = list(
                 filter(
                     lambda m: not m.content.startswith(COMMAND_PREFIX),
-                    await get_messages(message.channel, 100, filter_doomer=False),
+                    await get_messages(message.channel, 100, filter_bot=False),
                 )
             )
             context = format_messages(messages[-20:], emoji_names=False)
@@ -176,7 +176,10 @@ class DoomerCog(commands.Cog):
                             )
                         )
 
-    async def reply(self, message, force=False):
+    async def reply(self, message, force=False, reply_to=None, tokens=300, messages_only=False, message_count=None):
+        if not message_count:
+            message_count = self.settings["auto_reply_messages"]
+
         channel_settings = self.settings["channel_settings"]
         if message.channel.id in channel_settings["auto_reply_rate"]:
             auto_reply_rate = channel_settings["auto_reply_rate"][message.channel.id]
@@ -185,19 +188,25 @@ class DoomerCog(commands.Cog):
 
         if force or self.should_act(message, auto_reply_rate):
             async with message.channel.typing():
-                messages = fix_emoji(
-                    format_messages(
-                        await get_messages(
-                            message.channel,
-                            self.settings["auto_reply_messages"],
-                            filter_bot=False,
-                        ),
+                messages = await get_messages(
+                        message.channel,
+                        message_count,
+                        filter_bot=False,
+                        from_user=reply_to,
                     )
-                )
+
+                if messages_only:
+                    prompt = "\n".join(map(lambda x: x.clean_content, messages))
+                    stop=["THE END", "\n\n\n"]
+                else:
+                    prompt = format_messages(messages) + "\n**[" + get_nick(self.bot.user) + "]**:"
+                    stop=["**["]
+
+                prompt = fix_emoji(prompt)
                 banter = await self.complete_text(
-                    messages + "\n**[" + get_nick(self.bot.user) + "]**:",
-                    300,
-                    stop=["**["],
+                    prompt,
+                    tokens,
+                    stop=stop,
                 )
                 await message.channel.send(insert_emoji(message.guild, banter))
 
@@ -330,6 +339,20 @@ class DoomerCog(commands.Cog):
         try:
             await self.reply(ctx.message, force=True)
         except Exception as e:
+            await send_message(ctx, e)
+    
+    @commands.command()
+    async def monologue(self, ctx, num_messages, num_tokens):
+        try:
+            await self.reply(ctx.message, force=True, reply_to="doomer", tokens=int(num_tokens), messages_only=True, message_count=int(num_messages))
+        except Exception as e:
+            print(
+                "".join(
+                    traceback.format_exception(
+                        etype=type(e), value=e, tb=e.__traceback__
+                    )
+                )
+            )
             await send_message(ctx, e)
 
     @commands.command()
