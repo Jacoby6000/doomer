@@ -125,16 +125,10 @@ async def get_messages(
     raw_messages = await channel.history(
         limit=num_to_fetch, oldest_first=False, before=time
     ).flatten()
-    filtered_messages = list(
-        filter(
-            lambda msg: (
-                (not msg.author.bot or not filter_bot)
-                and not msg.clean_content.startswith(settings.COMMAND_PREFIX)
-            )
-            and (from_user is None or from_user in msg.author.name.lower()),
-            raw_messages,
-        )
-    )
+    no_bot = lambda msg: (not msg.author.bot) or (not filter_bot)
+    no_cmd = lambda msg: not msg.clean_content.startswith(settings.COMMAND_PREFIX)
+    only_user = lambda msg: (from_user is None) or (from_user in msg.author.name.lower())
+    filtered_messages = list(filter(only_user, filter(no_cmd, filter(no_bot, raw_messages))))
     filtered_messages.reverse()
     if bool(other_filter):
         filtered_messages = other_filter(filtered_messages)

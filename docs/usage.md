@@ -14,7 +14,7 @@
 > `>get_settings`
 > 
 > Get available models
-> `>get_models
+> `>get_models`
 >   
 > Get model settings
 > `>get_model_settings $model_name`
@@ -31,5 +31,5 @@
 > Set default model
 > `>set_default_model $model_name`
 > 
-> Send last `n` messages to hastebin.
-> `>hastebin $n`
+> Consume messages only from self, and monologue free of any chat metadata.
+> `>monologue $messagesToConsume $tokensToGenerate`
