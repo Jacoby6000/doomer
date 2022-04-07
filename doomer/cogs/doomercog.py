@@ -75,7 +75,7 @@ class DoomerCog(commands.Cog):
             None,
             partial(
                 self.default_model.completion_handler,
-                prompt=prompt,
+                prompt=prompt.strip(),
                 max_tokens=max_tokens,
                 stop=stop,
             ),
@@ -177,7 +177,7 @@ class DoomerCog(commands.Cog):
                         )
 
     async def reply(self, message, force=False, reply_to=None, tokens=300, messages_only=False, message_count=None):
-        if not message_count:
+        if message_count == None:
             message_count = self.settings["auto_reply_messages"]
 
         channel_settings = self.settings["channel_settings"]
@@ -203,11 +203,13 @@ class DoomerCog(commands.Cog):
                     stop=["**["]
 
                 prompt = fix_emoji(prompt)
+
                 banter = await self.complete_text(
                     prompt,
                     tokens,
                     stop=stop,
                 )
+
                 await message.channel.send(insert_emoji(message.guild, banter))
 
     # Help Commands
@@ -344,7 +346,7 @@ class DoomerCog(commands.Cog):
     @commands.command()
     async def monologue(self, ctx, num_messages, num_tokens):
         try:
-            await self.reply(ctx.message, force=True, reply_to="doomer", tokens=int(num_tokens), messages_only=True, message_count=int(num_messages))
+            await self.reply(ctx.message, force=True, reply_to=self.bot.user.name.lower(), tokens=int(num_tokens), messages_only=True, message_count=int(num_messages))
         except Exception as e:
             print(
                 "".join(
