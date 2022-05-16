@@ -80,7 +80,9 @@ class DoomerCog(commands.Cog):
                 stop=stop,
             ),
         )
-        return self.sanitize_output(completion_text)
+        out = self.sanitize_output(completion_text)
+        print(prompt.strip())
+        return out
 
     # Listeners
 
